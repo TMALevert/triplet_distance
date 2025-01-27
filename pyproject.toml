@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "triplet-distance"
+version = "0.1.0"
+description = ""
+authors = ["Tim Levert <t.m.a.levert@student.tudelft.nl>"]
+readme = "README.md"
+packages = [{include = "rooted_triplet_distance", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+networkx = "^3.4.2"
+matplotlib = "^3.9.3"
+invoke = "^2.2.0"
+snakeviz = "^2.2.2"
+methodtools = "^0.4.7"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

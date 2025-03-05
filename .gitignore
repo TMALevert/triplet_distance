@@ -1,3 +1,5 @@
 *.png
 *.pyc
 /.idea
+__pycache__/
+*.prof

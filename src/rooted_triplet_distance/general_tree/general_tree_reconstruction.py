@@ -48,7 +48,7 @@ class GeneralTreeReconstruction(AbstractTreeReconstruction):
         triplet_index = 0
         while len(possible_roots) >= 1 and triplet_index < len(self.__triplets):
             triplet = self.__triplets[triplet_index]
-            possible_roots.difference_update(triplet.labels - triplet.root)
+            # possible_roots.difference_update(triplet.labels - triplet.root)
             if triplet.type == r"1/2\3" and triplet.root in possible_roots:
                 triplet_branches = triplet.branches
                 if any(set.union(*triplet_branches).issubset(self.__descendants[other_label]) for other_label in
@@ -58,7 +58,7 @@ class GeneralTreeReconstruction(AbstractTreeReconstruction):
                 node_1, node_2 = triplet.labels - triplet.root
                 descendants_1 = self.__descendants[node_1].union({node_1})
                 descendants_2 = self.__descendants[node_2].union({node_2})
-                if any({desc_1, desc_2} in other_triplet.branches for other_triplet in self.__triplets for desc_1 in
+                if any({desc_1, desc_2} in other_triplet.branches for other_triplet in self.__triplets if triplet.type in ["1|2,3", "1,2|3"] for desc_1 in
                        descendants_1 for desc_2 in descendants_2):
                     possible_roots.difference_update(triplet.root)
                     continue
@@ -120,12 +120,12 @@ class GeneralTreeReconstruction(AbstractTreeReconstruction):
                                                      len(self.__descendants[node].intersection(fanned_triplet.labels)) == 2]
             for node in nodes_with_two_descendants_of_triplet:
                 self.__descendants[node].update(fanned_triplet.labels)
-                self.__descendants = self.__compute_transitive_descendants(self.__descendants)
+        self.__descendants = self.__compute_transitive_descendants(self.__descendants)
         return branches
 
     def reconstruct(self) -> dict[str, dict]:
-        if len(self._labels) == 1:
-            return {self._labels[0]: {}}
+        # if len(self._labels) == 1:
+        #     return {self._labels[0]: {}}
         tree = {}
         roots = self.__find_possible_roots()
         while len(roots) >= 1:

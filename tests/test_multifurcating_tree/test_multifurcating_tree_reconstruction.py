@@ -387,6 +387,7 @@ def test_compare_to_general_tree_reconstruction():
         [np.std(times) for times in times_per_numb_labels_general],
         label="General"
     )
+    plt.plot(np.linspace(min(numb_labels), max(numb_labels), 100), (max(times_multifurcating)/max(numb_labels)**4)*np.linspace(min(numb_labels), max(numb_labels), 100)**4, label=r"$n^4$")
     plt.xlabel("Number of labels")
     plt.ylabel("Average time [s]")
     plt.legend()

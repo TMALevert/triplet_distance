@@ -72,7 +72,7 @@ class MultifurcatingTreeReconstruction(AbstractTreeReconstruction):
                     branches.remove(branch_to_remove)
                 branches.append(set.union(*branches_containing_nodes, fanned_triplet.labels))
                 placed_nodes.update(fanned_triplet.labels)
-                additional_fanned_triplets = [triplet for triplet in fanned_triplets if fanned_triplet.labels.intersection(branches[-1]) != set()]
+                additional_fanned_triplets = [triplet for triplet in fanned_triplets if triplet.labels.intersection(branches[-1]) != set()]
                 for additional_fanned_triplet in additional_fanned_triplets:
                     resolve_fanned_triplet(additional_fanned_triplet)
             elif numb_placed_nodes == 2:
@@ -85,7 +85,7 @@ class MultifurcatingTreeReconstruction(AbstractTreeReconstruction):
                                 placed_nodes.add(unplaced_node)
                                 placed_node = True
                                 additional_fanned_triplets = [triplet for triplet in fanned_triplets if
-                                                              fanned_triplet.labels.intersection(branch) != set()]
+                                                              triplet.labels.intersection(branch) != set()]
                                 for additional_fanned_triplet in additional_fanned_triplets:
                                     resolve_fanned_triplet(additional_fanned_triplet)
                                 break

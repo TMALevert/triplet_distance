@@ -1,9 +1,9 @@
 from copy import copy
 
 from .__multifurcating_triplet import MultifurcatingTriplet
-from ..__abstract import AbstractTreeReconstruction
+from ..__abstract import AbstractGraphReconstruction
 
-class MultifurcatingTreeReconstruction(AbstractTreeReconstruction):
+class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
     def __init__(
             self,
             labels: list[str],

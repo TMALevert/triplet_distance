@@ -2,11 +2,11 @@ from itertools import combinations
 
 from networkx import ancestors, descendants
 
-from ..__abstract import AbstractTree
+from ..__abstract import AbstractGraph
 from .__general_triplet import GeneralTriplet
 
 
-class GeneralTree(AbstractTree):
+class GeneralTree(AbstractGraph):
     def __init__(self, tree: dict, labels: list[str] = None):
         super().__init__(tree, labels)
 

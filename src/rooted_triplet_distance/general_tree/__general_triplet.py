@@ -1,5 +1,4 @@
 import re
-from copy import copy
 
 from ..__abstract import AbstractTriplet
 

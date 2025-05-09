@@ -1,10 +1,10 @@
 from random import choice
 
-from ..__abstract import AbstractTreeReconstruction
+from ..__abstract import AbstractGraphReconstruction
 from .__general_triplet import GeneralTriplet
 
 
-class GeneralTreeReconstruction(AbstractTreeReconstruction):
+class GeneralTreeReconstruction(AbstractGraphReconstruction):
     def __init__(self, labels: list[str], triplets: list[str | GeneralTriplet], numb_unlabelled_nodes: int = 0, descendants: dict[str, set] = None, separations: dict[str, set] = None):
         super().__init__(labels)
         self.__triplets = [GeneralTriplet(triplet) for triplet in triplets]
@@ -58,7 +58,8 @@ class GeneralTreeReconstruction(AbstractTreeReconstruction):
                 node_1, node_2 = triplet.labels - triplet.root
                 descendants_1 = self.__descendants[node_1].union({node_1})
                 descendants_2 = self.__descendants[node_2].union({node_2})
-                if any({desc_1, desc_2} in other_triplet.branches for other_triplet in self.__triplets if triplet.type in ["1|2,3", "1,2|3"] for desc_1 in
+                if any({desc_1, desc_2} in other_triplet.branches for other_triplet in self.__triplets if
+                       triplet.type in ["1|2,3", "1,2|3"] for desc_1 in
                        descendants_1 for desc_2 in descendants_2):
                     possible_roots.difference_update(triplet.root)
                     continue

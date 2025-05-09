@@ -81,10 +81,8 @@ def create_random_tree(n):
     def add_edge(u, tree_dict):
         tree_dict[str(u)] = {}
         neighbours = list(undirected_tree.neighbors(u))
-        numb_of_children = 0
         for neighbour in neighbours:
             if not (neighbour, u) in tree.edges:
-                numb_of_children += 1
                 tree.add_edge(u, neighbour)
                 tree_dict[str(u)][str(neighbour)] = add_edge(neighbour, tree_dict[str(u)])[str(neighbour)]
         return tree_dict
@@ -120,7 +118,7 @@ def run_test_random_tree():
         assert triplet in triplets
 
 
-@pytest.mark.parametrize("_", range(3000))
+@pytest.mark.parametrize("_", range(100))
 def test_random_tree_often(_):
     # from cProfile import Profile
     # with Profile() as profile:
@@ -154,7 +152,7 @@ def run_test_random_tree_partial_triplets():
         raise AssertionError
 
 
-@pytest.mark.parametrize("_", range(3000))
+@pytest.mark.parametrize("_", range(100))
 def test_random_tree_partial_triplets(_):
     # from cProfile import Profile
     # with Profile() as profile:

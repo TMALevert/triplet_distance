@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 
 from matplotlib import pyplot as plt
 from networkx import DiGraph, multipartite_layout, draw_networkx, is_isomorphic
+from networkx.drawing import spring_layout
+from networkx.exception import NetworkXError
+from networkx.relabel import convert_node_labels_to_integers
 
 
 class AbstractTriplet(ABC):
@@ -36,7 +39,7 @@ class AbstractTriplet(ABC):
         ...
 
 
-class AbstractTree(ABC):
+class AbstractGraph(ABC):
     def __init__(self, tree: dict, labels: list[str] = None):
         self.layers = {}
         self._tree_dict = tree
@@ -74,8 +77,15 @@ class AbstractTree(ABC):
                     tree.add_edges_from(sub_tree.edges)
         return tree
 
-    def visualize(self, show=True, save=False, save_name=None):
-        pos = multipartite_layout(self._tree, self.layers)
+    def visualize(self, show=True, save=False, save_name=None, title: str = None):
+        try:
+            pos = multipartite_layout(self._tree, self.layers, align="horizontal", scale=-1)
+        except NetworkXError:
+            # pos = multipartite_layout(self._tree)
+            # pos = spring_layout(self._tree)
+            from networkx import bfs_layout, forceatlas2_layout
+            pos = bfs_layout(self._tree, list(self._tree_dict.keys())[0], align="horizontal", scale=-1)
+            # pos = forceatlas2_layout(self._tree)
         plt.figure()
         draw_networkx(
             self._tree,
@@ -85,16 +95,22 @@ class AbstractTree(ABC):
             nodelist=self.labels,
             labels={label: label for label in self.labels},
         )
+        if title is not None:
+            plt.title(title)
         if show:
             plt.show()
         if save:
             plt.savefig(f"{save_name}.png")
 
     def __eq__(self, other):
-        return is_isomorphic(self._tree, other._tree)
+        if self.labels != other.labels:
+            return False
+        return is_isomorphic(convert_node_labels_to_integers(self._tree, label_attribute='label'),
+                             convert_node_labels_to_integers(other._tree, label_attribute='label'),
+                             node_match=lambda x, y: x == y if (x['label'] in self.labels or y['label'] in self.labels) else True)
 
 
-class AbstractTreeReconstruction(ABC):
+class AbstractGraphReconstruction(ABC):
     def __init__(self, labels: list[str]):
         self._labels = list(set(labels))
 

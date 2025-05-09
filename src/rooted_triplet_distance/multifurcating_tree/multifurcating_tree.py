@@ -2,10 +2,10 @@ from networkx import DiGraph, ancestors
 from itertools import combinations
 
 from .__multifurcating_triplet import MultifurcatingTriplet
-from ..__abstract import AbstractTree
+from ..__abstract import AbstractGraph
 
 
-class MultifurcatingTree(AbstractTree):
+class MultifurcatingTree(AbstractGraph):
     def __init__(self, tree: dict, labels: list[str] = None):
         super().__init__(tree, labels)
 

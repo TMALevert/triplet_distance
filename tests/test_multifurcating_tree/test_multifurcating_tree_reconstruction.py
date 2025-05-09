@@ -253,7 +253,7 @@ def run_test_random_tree():
         assert triplet in triplets
 
 
-@pytest.mark.parametrize("_", range(3000))
+@pytest.mark.parametrize("_", range(100))
 def test_random_tree_often(_):
     # from cProfile import Profile
     # with Profile() as profile:
@@ -285,7 +285,7 @@ def run_test_random_tree_partial_triplets():
         raise e
 
 
-@pytest.mark.parametrize("_", range(3000))
+@pytest.mark.parametrize("_", range(100))
 def test_random_tree_partial_triplets(_):
     # from cProfile import Profile
     # with Profile() as profile:

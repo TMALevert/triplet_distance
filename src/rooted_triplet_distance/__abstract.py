@@ -84,6 +84,7 @@ class AbstractGraph(ABC):
             # pos = multipartite_layout(self._tree)
             # pos = spring_layout(self._tree)
             from networkx import bfs_layout, forceatlas2_layout
+
             pos = bfs_layout(self._tree, list(self._tree_dict.keys())[0], align="horizontal", scale=-1)
             # pos = forceatlas2_layout(self._tree)
         plt.figure()
@@ -105,9 +106,11 @@ class AbstractGraph(ABC):
     def __eq__(self, other):
         if self.labels != other.labels:
             return False
-        return is_isomorphic(convert_node_labels_to_integers(self._tree, label_attribute='label'),
-                             convert_node_labels_to_integers(other._tree, label_attribute='label'),
-                             node_match=lambda x, y: x == y if (x['label'] in self.labels or y['label'] in self.labels) else True)
+        return is_isomorphic(
+            convert_node_labels_to_integers(self._tree, label_attribute="label"),
+            convert_node_labels_to_integers(other._tree, label_attribute="label"),
+            node_match=lambda x, y: x == y if (x["label"] in self.labels or y["label"] in self.labels) else True,
+        )
 
 
 class AbstractGraphReconstruction(ABC):

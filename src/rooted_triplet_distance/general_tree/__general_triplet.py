@@ -43,7 +43,9 @@ class GeneralTriplet(AbstractTriplet):
             self.__type = triplet.__type
         else:
             super().__init__(triplet)
-            self._parts = {tuple(part.split(",")) if "," in part else part for part in re.split(r"[/\\|]", self._string)}
+            self._parts = {
+                tuple(part.split(",")) if "," in part else part for part in re.split(r"[/\\|]", self._string)
+            }
             self._labels = set()
             for label in self._parts:
                 self._labels = self._labels.union({label} if isinstance(label, str) else set(label))
@@ -87,30 +89,19 @@ class GeneralTriplet(AbstractTriplet):
     def __get_separations(self) -> dict[str, set]:
         nodes = _triplet_types_to_re_pattern[self.__type].fullmatch(self._string).groups()
         if self.__type == "1|2,3":
-            return {nodes[0]: {nodes[1], nodes[2]},
-                    nodes[1]: {nodes[0], nodes[2]},
-                    nodes[2]: {nodes[0], nodes[1]}}
+            return {nodes[0]: {nodes[1], nodes[2]}, nodes[1]: {nodes[0], nodes[2]}, nodes[2]: {nodes[0], nodes[1]}}
         elif self.__type == "1|2|3":
-            return {nodes[0]: {nodes[1], nodes[2]},
-                    nodes[1]: {nodes[0], nodes[2]},
-                    nodes[2]: {nodes[0], nodes[1]}}
+            return {nodes[0]: {nodes[1], nodes[2]}, nodes[1]: {nodes[0], nodes[2]}, nodes[2]: {nodes[0], nodes[1]}}
         elif self.__type == "1/2|3":
-            return {nodes[0]: {nodes[2]},
-                    nodes[1]: {nodes[2]},
-                    nodes[2]: {nodes[0], nodes[1]}}
+            return {nodes[0]: {nodes[2]}, nodes[1]: {nodes[2]}, nodes[2]: {nodes[0], nodes[1]}}
         elif self.__type == "1/2/3":
             return {}
         elif self.__type == r"1/2\3":
-            return {nodes[0]: {nodes[2]},
-                    nodes[2]: {nodes[0]}}
+            return {nodes[0]: {nodes[2]}, nodes[2]: {nodes[0]}}
         elif self.__type == r"1|2\3":
-            return {nodes[0]: {nodes[1], nodes[2]},
-                    nodes[1]: {nodes[0]},
-                    nodes[2]: {nodes[0]}}
+            return {nodes[0]: {nodes[1], nodes[2]}, nodes[1]: {nodes[0]}, nodes[2]: {nodes[0]}}
         elif self.__type == r"1,2|3":
-            return {nodes[0]: {nodes[1], nodes[2]},
-                    nodes[1]: {nodes[0], nodes[2]},
-                    nodes[2]: {nodes[0], nodes[1]}}
+            return {nodes[0]: {nodes[1], nodes[2]}, nodes[1]: {nodes[0], nodes[2]}, nodes[2]: {nodes[0], nodes[1]}}
         elif self.__type == r"1\2\3":
             return {}
 

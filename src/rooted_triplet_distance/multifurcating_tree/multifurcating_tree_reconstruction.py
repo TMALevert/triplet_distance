@@ -1,14 +1,16 @@
 from .__multifurcating_triplet import MultifurcatingTriplet
 from ..__abstract import AbstractGraphReconstruction
 
+
 class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
     def __init__(
-            self,
-            labels: list[str],
-            triplets: list[str | MultifurcatingTriplet],
-            D_set: dict[str, set[str]] = None,
-            numb_unlabelled_nodes: int = 0,
-            root_name="root",):
+        self,
+        labels: list[str],
+        triplets: list[str | MultifurcatingTriplet],
+        D_set: dict[str, set[str]] = None,
+        numb_unlabelled_nodes: int = 0,
+        root_name="root",
+    ):
         super().__init__(labels)
         self.__triplets = [MultifurcatingTriplet(triplet) for triplet in triplets]
         if D_set is None:
@@ -49,12 +51,16 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
                         if numb_of_placed_nodes == 0:
                             branches.append(set(part))
                         elif numb_of_placed_nodes == 2:
-                            branches_containing_nodes = [branch for branch in branches if branch.intersection(part) != set()]
+                            branches_containing_nodes = [
+                                branch for branch in branches if branch.intersection(part) != set()
+                            ]
                             for branch_to_remove in branches_containing_nodes:
                                 branches.remove(branch_to_remove)
                             branches.append(set.union(*branches_containing_nodes, set(part)))
                         else:
-                            branch_contaning_nodes = [branch for branch in branches if part[0] in branch or part[1] in branch][0]
+                            branch_contaning_nodes = [
+                                branch for branch in branches if part[0] in branch or part[1] in branch
+                            ][0]
                             branch_contaning_nodes.update(part)
                         placed_nodes.update(part)
             else:
@@ -62,7 +68,9 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
 
         def resolve_fanned_triplet(fanned_triplet: MultifurcatingTriplet):
             numb_placed_nodes = len(fanned_triplet.labels.intersection(placed_nodes))
-            branches_containing_nodes = [branch for branch in branches if fanned_triplet.labels.intersection(branch) != set()]
+            branches_containing_nodes = [
+                branch for branch in branches if fanned_triplet.labels.intersection(branch) != set()
+            ]
             if len(branches_containing_nodes) == 3 or (numb_placed_nodes == 3 and len(branches_containing_nodes) == 1):
                 return
             elif numb_placed_nodes > len(branches_containing_nodes):
@@ -70,7 +78,9 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
                     branches.remove(branch_to_remove)
                 branches.append(set.union(*branches_containing_nodes, fanned_triplet.labels))
                 placed_nodes.update(fanned_triplet.labels)
-                additional_fanned_triplets = [triplet for triplet in fanned_triplets if triplet.labels.intersection(branches[-1]) != set()]
+                additional_fanned_triplets = [
+                    triplet for triplet in fanned_triplets if triplet.labels.intersection(branches[-1]) != set()
+                ]
                 for additional_fanned_triplet in additional_fanned_triplets:
                     resolve_fanned_triplet(additional_fanned_triplet)
             elif numb_placed_nodes == 2:
@@ -82,8 +92,11 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
                                 branch.add(unplaced_node)
                                 placed_nodes.add(unplaced_node)
                                 placed_node = True
-                                additional_fanned_triplets = [triplet for triplet in fanned_triplets if
-                                                              triplet.labels.intersection(branch) != set()]
+                                additional_fanned_triplets = [
+                                    triplet
+                                    for triplet in fanned_triplets
+                                    if triplet.labels.intersection(branch) != set()
+                                ]
                                 for additional_fanned_triplet in additional_fanned_triplets:
                                     resolve_fanned_triplet(additional_fanned_triplet)
                                 break
@@ -102,7 +115,9 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
                     resolve_fanned_triplet(fanned_triplet)
             if node in set(self._labels) - placed_nodes:
                 for branch in branches:
-                    if ((node in children and len(branch) >= 2) or node not in children) and self.__D_sets[node].intersection(branch) == branch:
+                    if ((node in children and len(branch) >= 2) or node not in children) and self.__D_sets[
+                        node
+                    ].intersection(branch) == branch:
                         branch.add(node)
                         break
                 else:

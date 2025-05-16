@@ -229,7 +229,9 @@ def test_divide_in_branches(triplets, labels, children, branches):
 )
 def test_divide_in_branches_conflicting_triplets(triplets, labels):
     assert (
-        len(MultifurcatingTreeReconstruction(labels, triplets)._MultifurcatingTreeReconstruction__divide_in_branches([]))
+        len(
+            MultifurcatingTreeReconstruction(labels, triplets)._MultifurcatingTreeReconstruction__divide_in_branches([])
+        )
         == 1
     )
 

@@ -5,7 +5,14 @@ from .__general_triplet import GeneralTriplet
 
 
 class GeneralTreeReconstruction(AbstractGraphReconstruction):
-    def __init__(self, labels: list[str], triplets: list[str | GeneralTriplet], numb_unlabelled_nodes: int = 0, descendants: dict[str, set] = None, separations: dict[str, set] = None):
+    def __init__(
+        self,
+        labels: list[str],
+        triplets: list[str | GeneralTriplet],
+        numb_unlabelled_nodes: int = 0,
+        descendants: dict[str, set] = None,
+        separations: dict[str, set] = None,
+    ):
         super().__init__(labels)
         self.__triplets = [GeneralTriplet(triplet) for triplet in triplets]
         self.__numb_unlabelled_nodes = numb_unlabelled_nodes
@@ -44,23 +51,34 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         return descendants, separations
 
     def __find_possible_roots(self) -> list[str]:
-        possible_roots: set = {label for label in self._labels if self.__separation[label].intersection(self._labels) == set() and all(label not in self.__descendants[other_label] for other_label in self._labels)}
+        possible_roots: set = {
+            label
+            for label in self._labels
+            if self.__separation[label].intersection(self._labels) == set()
+            and all(label not in self.__descendants[other_label] for other_label in self._labels)
+        }
         triplet_index = 0
         while len(possible_roots) >= 1 and triplet_index < len(self.__triplets):
             triplet = self.__triplets[triplet_index]
             # possible_roots.difference_update(triplet.labels - triplet.root)
             if triplet.type == r"1/2\3" and triplet.root in possible_roots:
                 triplet_branches = triplet.branches
-                if any(set.union(*triplet_branches).issubset(self.__descendants[other_label]) for other_label in
-                       set(self._labels) - triplet.root):
+                if any(
+                    set.union(*triplet_branches).issubset(self.__descendants[other_label])
+                    for other_label in set(self._labels) - triplet.root
+                ):
                     possible_roots.difference_update(triplet.root)
                     continue
                 node_1, node_2 = triplet.labels - triplet.root
                 descendants_1 = self.__descendants[node_1].union({node_1})
                 descendants_2 = self.__descendants[node_2].union({node_2})
-                if any({desc_1, desc_2} in other_triplet.branches for other_triplet in self.__triplets if
-                       triplet.type in ["1|2,3", "1,2|3"] for desc_1 in
-                       descendants_1 for desc_2 in descendants_2):
+                if any(
+                    {desc_1, desc_2} in other_triplet.branches
+                    for other_triplet in self.__triplets
+                    if triplet.type in ["1|2,3", "1,2|3"]
+                    for desc_1 in descendants_1
+                    for desc_2 in descendants_2
+                ):
                     possible_roots.difference_update(triplet.root)
                     continue
             triplet_index += 1
@@ -76,7 +94,9 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
                 continue
             descedants_and_label = self.__descendants[label].union({label})
             if descedants_and_label.intersection(placed_nodes) != set():
-                branches_containing_descendants = [branch for branch in branches if descedants_and_label.intersection(branch) != set()]
+                branches_containing_descendants = [
+                    branch for branch in branches if descedants_and_label.intersection(branch) != set()
+                ]
                 for branch_to_remove in branches_containing_descendants:
                     branches.remove(branch_to_remove)
                 branches.append(set.union(*branches_containing_descendants, descedants_and_label))
@@ -96,9 +116,13 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
                 branches.remove(branch_1)
                 branches.remove(branch_2)
                 branches.append(branch_1.union(branch_2))
-                other_triplets = [other_triplet for other_triplet in self.__triplets if
-                                  other_triplet.type == r"1|2|3" and other_triplet.labels.intersection(
-                                      triplet.labels) != set() and other_triplet != triplet]
+                other_triplets = [
+                    other_triplet
+                    for other_triplet in self.__triplets
+                    if other_triplet.type == r"1|2|3"
+                    and other_triplet.labels.intersection(triplet.labels) != set()
+                    and other_triplet != triplet
+                ]
                 return other_triplets
 
         # Handle specific triplets
@@ -108,7 +132,9 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
             elif triplet.type in (r"1,2|3", r"1|2,3"):
                 for triplet_branch in triplet.branches:
                     if len(triplet_branch) == 2:
-                        branches_containing_branch = [branch for branch in branches if triplet_branch.intersection(branch) != set()]
+                        branches_containing_branch = [
+                            branch for branch in branches if triplet_branch.intersection(branch) != set()
+                        ]
                         if len(branches_containing_branch) == 2:
                             branch_1, branch_2 = branches_containing_branch
                             branches.remove(branch_1)
@@ -117,8 +143,9 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         for fanned_triplet in fanned_triplets:
             extra_triplets_to_resolve = resolve_fanned_triplet(fanned_triplet)
             fanned_triplets.extend(extra_triplets_to_resolve or [])
-            nodes_with_two_descendants_of_triplet = [node for node in self._labels if
-                                                     len(self.__descendants[node].intersection(fanned_triplet.labels)) == 2]
+            nodes_with_two_descendants_of_triplet = [
+                node for node in self._labels if len(self.__descendants[node].intersection(fanned_triplet.labels)) == 2
+            ]
             for node in nodes_with_two_descendants_of_triplet:
                 self.__descendants[node].update(fanned_triplet.labels)
         self.__descendants = self.__compute_transitive_descendants(self.__descendants)
@@ -130,7 +157,11 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         while len(roots) >= 1:
             root = choice(roots)
             branches = self.__divide_in_branches(root)
-            if any(sum([branch.intersection(triplet.labels) != set() for branch in branches]) != 2 for triplet in self.__triplets if ({root} == triplet.root and triplet.type == r"1/2\3")):
+            if any(
+                sum([branch.intersection(triplet.labels) != set() for branch in branches]) != 2
+                for triplet in self.__triplets
+                if ({root} == triplet.root and triplet.type == r"1/2\3")
+            ):
                 roots.remove(root)
             else:
                 break
@@ -159,7 +190,7 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
                     [triplet for triplet in self.__triplets if all(node in branch for node in triplet)],
                     self.__numb_unlabelled_nodes,
                     self.__descendants,
-                    self.__separation
+                    self.__separation,
                 )
                 sub_dict = subtree.reconstruct()
                 self.__numb_unlabelled_nodes = subtree.__numb_unlabelled_nodes

@@ -32,8 +32,7 @@ class LevelOneNetwork(AbstractGraph):
             undirected_edges = set(t.edges())
             actual_edges = [e for e in network_edges if e in undirected_edges or tuple(reversed(e)) in undirected_edges]
             tree = DiGraph(actual_edges)
-            if len(tree.nodes) == len(self._tree.nodes) and len(
-                    [v for v in tree.nodes if tree.in_degree(v) == 0]) == 1:
+            if len(tree.nodes) == len(self._tree.nodes) and len([v for v in tree.nodes if tree.in_degree(v) == 0]) == 1:
                 tree_dict = __create_tree_dictionary(dict(tree.adj), root)
                 spanning_trees.append(GeneralTree(tree_dict, self.labels))
         return spanning_trees
@@ -45,4 +44,3 @@ class LevelOneNetwork(AbstractGraph):
                 if triplet not in triplets:
                     triplets.append(triplet)
         return triplets
-

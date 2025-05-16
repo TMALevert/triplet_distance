@@ -1,5 +1,3 @@
-from copy import copy
-
 from .__multifurcating_triplet import MultifurcatingTriplet
 from ..__abstract import AbstractGraphReconstruction
 

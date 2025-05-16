@@ -120,11 +120,6 @@ def run_test_random_tree():
 
 @pytest.mark.parametrize("_", range(100))
 def test_random_tree_often(_):
-    # from cProfile import Profile
-    # with Profile() as profile:
-    #     for _ in range(100):
-    #         run_test_random_tree()
-    # profile.dump_stats("test_random_tree_often.prof")
     run_test_random_tree()
 
 
@@ -140,23 +135,10 @@ def run_test_random_tree_partial_triplets():
     reconstruction = GeneralTreeReconstruction(labels, triplet_subset)
     obtained_tree = GeneralTree(reconstruction.reconstruct(), labels)
 
-    try:
-        for triplet in triplet_subset:
-            assert triplet in obtained_tree.triplets
-    except AssertionError:
-        for triplet in triplet_subset:
-            print(triplet)
-        tree.visualize()
-        obtained_tree.visualize()
-        reconstruction.reconstruct()
-        raise AssertionError
+    for triplet in triplet_subset:
+        assert triplet in obtained_tree.triplets
 
 
 @pytest.mark.parametrize("_", range(100))
 def test_random_tree_partial_triplets(_):
-    # from cProfile import Profile
-    # with Profile() as profile:
-    #     for _ in range(20):
-    #         run_test_random_tree_partial_triplets()
-    # profile.dump_stats("test_random_tree_partial_triplets.prof")
     run_test_random_tree_partial_triplets()

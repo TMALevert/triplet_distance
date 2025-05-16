@@ -1,13 +1,9 @@
-import timeit
 from random import sample, randint
 
-import numpy as np
 import pytest
-from matplotlib import pyplot as plt, scale
 from networkx import random_labeled_rooted_tree, DiGraph
 
-from rooted_triplet_distance import MultifurcatingTreeReconstruction, MultifurcatingTree, GeneralTreeReconstruction, \
-    GeneralTree
+from rooted_triplet_distance import MultifurcatingTreeReconstruction, MultifurcatingTree
 
 
 def create_random_tree(n, a):
@@ -255,11 +251,6 @@ def run_test_random_tree():
 
 @pytest.mark.parametrize("_", range(100))
 def test_random_tree_often(_):
-    # from cProfile import Profile
-    # with Profile() as profile:
-    #     for _ in range(20):
-    #         run_test_random_tree()
-    # profile.dump_stats("test_random_multifurcating_tree_often.prof")
     run_test_random_tree()
 
 
@@ -275,140 +266,10 @@ def run_test_random_tree_partial_triplets():
         triplet_subset = triplets
     reconstruction = MultifurcatingTreeReconstruction(labels, triplet_subset)
     obtained_tree = MultifurcatingTree(reconstruction.reconstruct(), labels)
-    try:
-        for triplet in triplet_subset:
-            assert triplet in obtained_tree.triplets
-    except AssertionError as e:
-        print(triplet_subset)
-        print(tree_dict)
-        print(labels)
-        raise e
+    for triplet in triplet_subset:
+        assert triplet in obtained_tree.triplets
 
 
 @pytest.mark.parametrize("_", range(100))
 def test_random_tree_partial_triplets(_):
-    # from cProfile import Profile
-    # with Profile() as profile:
-    #     for _ in range(20):
-    #         run_test_random_tree_partial_triplets()
-    # profile.dump_stats("test_random_multifurcating_tree_partial_triplets.prof")
     run_test_random_tree_partial_triplets()
-
-
-def test_compare_to_general_tree_reconstruction():
-    n = 1000
-    size = randint(15,20)
-    # size = 8
-    print(size)
-    times_multifurcating: list[float] = []
-    times_general: list[float] = []
-    times_per_triplet_multifurcating: list[float] = []
-    times_per_triplet_general: list[float] = []
-    numb_multifurcating_triplets: list[int] = []
-    numb_general_triplets: list[int] = []
-    numb_labels: list[int] = []
-    for _ in range(n):
-        tree_dict, labels = create_random_tree(size, 4)
-
-        tree = MultifurcatingTree(tree_dict, labels)
-        general_tree = GeneralTree(tree_dict, labels)
-
-        triplets = tree.triplets
-        general_triplets = general_tree.triplets
-        numb_multifurcating_triplets.append(len(triplets))
-        numb_general_triplets.append(len(general_triplets))
-        numb_labels.append(len(labels))
-
-        multifurcating_reconstruction = MultifurcatingTreeReconstruction(labels, triplets)
-        obtained_tree = MultifurcatingTree(multifurcating_reconstruction.reconstruct(), labels)
-
-        assert tree == obtained_tree
-        # assert len(obtained_tree.triplets) == len(triplets)
-        # for triplet in obtained_tree.triplets:
-        #     assert triplet in triplets
-
-        times_multifurcating.append(timeit.timeit(lambda: multifurcating_reconstruction.reconstruct(), number=5)/5)
-        times_per_triplet_multifurcating.append(times_multifurcating[-1] / len(triplets))
-
-        general_reconstruction = GeneralTreeReconstruction(labels, general_triplets)
-        obtained_tree = MultifurcatingTree(general_reconstruction.reconstruct(), labels)
-
-        assert tree == obtained_tree
-        # assert len(obtained_tree.triplets) == len(triplets)
-        # for triplet in obtained_tree.triplets:
-        #     assert triplet in triplets
-
-        times_general.append(timeit.timeit(lambda: general_reconstruction.reconstruct(), number=5) / 5)
-        times_per_triplet_general.append(times_general[-1] / len(general_triplets))
-
-    plt.figure()
-    plt.hist(numb_multifurcating_triplets, alpha=0.5, label="Multifurcating triplets")
-    plt.hist(numb_general_triplets, alpha=0.5, label="General triplets")
-    plt.ylabel("Number of trees")
-    plt.xlabel("Number of triplets")
-    plt.legend()
-    plt.title(f"Number of triplets in the triplet subset for {n} random trees")
-    plt.savefig(f"histogram_numb_triplets_{size}.png")
-
-    plt.figure()
-    # Get numb of triplets per numb of labels
-    plt.scatter(numb_labels, numb_multifurcating_triplets, alpha=0.5, label="Multifurcating triplets")
-    plt.scatter(numb_labels, numb_general_triplets, alpha=0.5, label="General triplets")
-    plt.plot(np.linspace(min(numb_labels), max(numb_labels), 100), 1/6*np.linspace(min(numb_labels), max(numb_labels), 100)**3, label=r"$\frac{n^3}{3!}$")
-    plt.xlabel("Number of labels")
-    plt.ylabel("Number of triplets")
-    plt.legend()
-    plt.title("Number of triplets in the triplet subset per number of labels")
-    plt.savefig("scatter_numb_triplets_per_numb_labels.png")
-
-    # Create a plot showing the average time and the standard deviation for each method on the y axis and the number of labels on the x axis
-    plt.figure()
-    times_per_numb_labels_multi = []
-    unique_numb_labels = list(set(numb_labels))
-    for numb in unique_numb_labels:
-        times_per_numb_labels_multi.append(
-            [times_multifurcating[i] for i in range(n) if numb_labels[i] == numb]
-        )
-
-    times_per_numb_labels_general = []
-    for numb in unique_numb_labels:
-        times_per_numb_labels_general.append(
-            [times_general[i] for i in range(n) if numb_labels[i] == numb]
-        )
-    plt.errorbar(
-        unique_numb_labels,
-        [np.mean(times) for times in times_per_numb_labels_multi],
-        [np.std(times) for times in times_per_numb_labels_multi],
-        label="Multifurcating"
-    )
-    plt.errorbar(
-        unique_numb_labels,
-        [np.mean(times) for times in times_per_numb_labels_general],
-        [np.std(times) for times in times_per_numb_labels_general],
-        label="General"
-    )
-    plt.plot(np.linspace(min(numb_labels), max(numb_labels), 100), (max(times_multifurcating)/max(numb_labels)**4)*np.linspace(min(numb_labels), max(numb_labels), 100)**4, label=r"$n^4$")
-    plt.xlabel("Number of labels")
-    plt.ylabel("Average time [s]")
-    plt.legend()
-    plt.title("Average time per number of labels")
-    plt.savefig("errorbar_average_time_per_numb_labels.png")
-
-    plt.figure()
-    plt.yscale(scale.FuncScale(None, functions=(lambda x: np.sign(x)*abs(x)**(4/7), lambda x: np.sign(x)*abs(x)**(7/4))))
-    domain = np.linspace(min(min(numb_general_triplets), min(numb_multifurcating_triplets)), max(max(numb_general_triplets), max(numb_multifurcating_triplets)), 100)
-    plt.plot(domain, (max(max(times_multifurcating), max(times_general))/max(domain**(7/4)))*domain**(7/4), label=r"~$n^{\frac{7}{4}}$")
-    plt.scatter(numb_multifurcating_triplets, times_multifurcating, alpha=0.5, label="Multifurcating")
-    plt.scatter(numb_general_triplets, times_general, alpha=0.5, label="General")
-    plt.xlabel("Number of triplets")
-    plt.ylabel("Average time [s]")
-    plt.legend()
-    plt.title("Time per number of triplets")
-    plt.savefig("scatter_time_per_numb_triplets.png")
-
-    # print(f"Multifurcating average [s]: {sum(times_multifurcating) / n}")
-    # print(f"General average [s]: {sum(times_general) / n}")
-    # print(f"Percentage of time saved using general: {100 * (1 - sum(times_general) / sum(times_multifurcating))}%")
-    # print(f"Percentage of times general is faster: {100 * (sum(np.array(times_general) <= np.array(times_multifurcating))) / n}%")
-    # print(f"Multifurcating average per triplet [s]: {sum(times_per_triplet_multifurcating) / n}")
-    # print(f"General average per triplet [s]: {sum(times_per_triplet_general) / n}")

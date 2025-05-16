@@ -2,9 +2,6 @@ from copy import copy
 from itertools import combinations, product
 from random import choice
 
-from networkx.algorithms.flow import build_residual_network
-
-from .. import GeneralTreeReconstruction
 from ..__abstract import AbstractGraphReconstruction
 from .level_one_network import NetworkTriplet
 
@@ -24,30 +21,27 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
             self.__sn_sets = self.__get_non_trivial_sn_sets()
         self.__maximal_sn_sets = self.__get_maximal_sn_sets()
 
-    def __find_additional_sn_set_labels(self, sn_set: set) -> set:
-        starting_sn_set = copy(sn_set)
-        if sn_set == self._labels:
-            return sn_set
-        for i, j in combinations(sn_set, 2):
-            for triplet in self.__triplets:
-                if not {i, j}.issubset(triplet.labels) or triplet.labels.issubset(sn_set):
-                    continue
-                other_label = (triplet.labels - {i, j}).pop()
-                if ((triplet.root != {other_label} and triplet._separations.get(other_label) != {i, j})
-                        or triplet.type in ("1|2|3", r"1/2\3")
-                        or (triplet.type in ("1|2,3", "1,2|3") and {other_label} not in triplet.branches)):
-                    sn_set.add(other_label)
-        if sn_set == starting_sn_set:
-            return sn_set
-        else:
-            return self.__find_additional_sn_set_labels(sn_set)
-
     def __get_non_trivial_sn_sets(self):
         sn_sets = {frozenset({label}) for label in self._labels}
         for i, j in combinations(self._labels, 2):
-            sn_set = frozenset(self.__find_additional_sn_set_labels({i, j}))
+            sn_set = {i}
+            z_set = {j}
+            while len(z_set) != 0:
+                z = z_set.pop()
+                for label in sn_set:
+                    for triplet in self.__triplets:
+                        if not {label, z}.issubset(triplet.labels):
+                            continue
+                        other_label = (triplet.labels - {label, z}).pop()
+                        if other_label in sn_set or other_label in z_set:
+                            continue
+                        if ((triplet.root != {other_label} and triplet._separations.get(other_label) != {label, z})
+                                or triplet.type in ("1|2|3", r"1/2\3")
+                                or (triplet.type in ("1|2,3", "1,2|3") and {other_label} not in triplet.branches)):
+                            z_set.add(other_label)
+                sn_set.add(z)
             if len(sn_set) != len(self._labels):
-                sn_sets.add(sn_set)
+                sn_sets.add(frozenset(sn_set))
         return sn_sets
 
     def __get_maximal_sn_sets(self):
@@ -171,11 +165,6 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         for fanned_triplet in fanned_triplets:
             extra_triplets_to_resolve = resolve_fanned_triplet(fanned_triplet)
             fanned_triplets.extend(extra_triplets_to_resolve or [])
-            nodes_with_two_descendants_of_triplet = [node for node in self._labels if
-                                                     len(self.__descendants[node].intersection(fanned_triplet.labels)) == 2]
-            # for node in nodes_with_two_descendants_of_triplet:
-            #     self.__descendants[node].update(fanned_triplet.labels)
-        # self.__descendants = self.__compute_transitive_descendants(self.__descendants)
         return branches
 
     def __find_sink_of_cycle(self, source: str) -> list[set | frozenset]:
@@ -213,23 +202,8 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                     branch = [branch for branch in triplet.branches if len(branch) == 1][0]
                     sink = branch.pop()
                     sinks_and_descendants.add(sink)
-                    # if all(triplet.type in (r"1|2\3", r"1/2|3") for triplet in triplets_containing_nodes):
-                    #     sink = list(triplets_containing_nodes[0]._descendants.values())[0]
-                    #     # possible_sinks.difference_update({node1, node2, node3} - {sink})
-                    #     sink_and_descendants.add(sink)
                 elif all(triplet.type in (r"1|2,3", r"1,2|3") for triplet in triplets_containing_nodes):
                     double_resolved_triplets.extend(triplets_containing_nodes)
-                    # elif any(triplet.type in (r"1|2\3", r"1/2|3") for triplet in triplets_containing_nodes) and any(triplet.type in (r"1\2\3", r"1/2/3") for triplet in triplets_containing_nodes):
-                    #     triplet = [triplet for triplet in triplets_containing_nodes if triplet.type in (r"1\2\3", r"1/2/3")][0]
-                    #     sink = [node for node in (node1, node2, node3) if triplet._descendants.get(node, None) == None][0]
-                    #     # possible_sinks.difference_update({node1, node2, node3} - {sink})
-                    #     sink_and_descendants.add(sink)
-                    # elif any(triplet.type in (r"1|2\3", r"1/2|3") for triplet in triplets_containing_nodes) and any(triplet.type in (r"1,2|3", r"1|2,3") for triplet in triplets_containing_nodes):
-                    #     triplet = [triplet for triplet in triplets_containing_nodes if triplet.type in (r"1|2\3", r"1/2|3")][0]
-                    #     branch = [branch for branch in triplet.branches if len(branch) != 1][0]
-                    #     sink = [node for node in branch if triplet._descendants.get(node, None) == None][0]
-                    #     # possible_sinks.difference_update({node1, node2, node3} - {sink})
-                    #     sink_and_descendants.add(sink)
         for resolved_triplet in double_resolved_triplets:
             if resolved_triplet.labels.intersection(sinks_and_descendants) != set():
                 continue
@@ -257,8 +231,6 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                     elif len(bcd_triplets) == 0:
                         sinks_and_descendants.add(a)
                         break
-            # else:
-            #     continue
 
         if sinks_and_descendants == set():
             for label in set(self._labels) - {source}:
@@ -316,49 +288,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                             labels_per_cycle[sinks_and_descendants.index(sink_2)].add(label)
                         elif {s_2} in triplet.branches:
                             labels_per_cycle[sinks_and_descendants.index(sink_1)].add(label)
-                        else:
-                            print("wtf?")
-                    elif len(resolved_triplet) == 0:
-                        print("Wtf")
             return sinks_and_descendants, labels_per_cycle
         else:
             return sinks_and_descendants, [set(self._labels) - {source}]
-            # for s_1, s_2 in product(sink_1, sink_2):
-            #     for other_label in set(self._labels) - sink_1 - sink_2:
-            #         triplets = [triplet for triplet in self.__triplets if all(node in triplet.labels for node in (s_1, s_2, other_label)) and triplet.type in (r"1|2|3", r"1|2,3", r"1,2|3")]
-            #         if len(triplets) >= 2:
-            #             fanned_triplet = [triplet for triplet in triplets if triplet.type == r"1|2|3"]
-            #             resolved_triplet = [triplet for triplet in triplets if triplet.type in (r"1,2|3", r"1|2,3")]
-            #             if len(fanned_triplet) > 0 and len(resolved_triplet) > 0:
-            #                 resolved_triplet = resolved_triplet[0]
-            #                 if {s_1} in resolved_triplet.branches:
-            #                     sinks_and_descendants.discard(sink_2)
-            #                     break
-            #                 elif {s_2} in resolved_triplet.branches:
-            #                     sinks_and_descendants.discard(sink_1)
-            #                     break
-            #     else:
-            #         continue
-            #     break
-
-
-                # for triplet in triplets:
-                #     # triplet = triplet[0]
-                #     other_label = (list(triplet.labels - {s_1, s_2}))[0]
-                #     if s_1 in self.__descendants[other_label]:
-                #         return sink_2
-                #     elif s_2 in self.__descendants[other_label]:
-                #         return sink_1
 
     def __resolve_cycle(self, sink_and_descendants: set[str], cycle_labels: set[str], source: str = None) -> tuple[list[set[str]], set[str], set[str]]:
-
-        # elif len(sink_and_descendants) == 1:
-        #     sink_and_descendants = set(sink_and_descendants[0])
-        # else:
-        #     self.__find_sink_of_cycle(source)
-        # sinks_in_triplets = [triplet for triplet in self.__triplets for sink1, sink2 in combinations(sink_and_descendants, 2) for internal in (set(self._labels) - sink_and_descendants) if all(node in triplet for node in (sink1, sink2, internal)) and triplet.type == r"1|2|3"]
-        # if len(sinks_in_triplets) > 0:
-        #     pass
         internal_cycle_vertices = {label for label in cycle_labels if self.__descendants[label].intersection(sink_and_descendants) == sink_and_descendants - {label}}
         cycle_branches: list[set[str]] = []
         internal_cycle_vertex_to_branch = []
@@ -402,10 +336,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                 internal_cycle_vertex_to_branch.append((node2, node1))
         for int_vertex, branch_vertex in internal_cycle_vertex_to_branch:
             branch = [branch for branch in cycle_branches if branch_vertex in branch]
-            try:
-                branch[0].add(int_vertex)
-            except IndexError:
-                pass
+            branch[0].add(int_vertex)
         if cycle_branches == [] and internal_cycle_vertex_to_branch == [] and len(cycle_labels - sink_and_descendants) == 2:
             cycle_branches = [{node} for node in cycle_labels - sink_and_descendants]
         return cycle_branches, sink_and_descendants, internal_cycle_vertices
@@ -427,8 +358,6 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                 left.append(branch1)
             elif branch2 in right:
                 right.append(branch1)
-            else:
-                print("Fuck")
 
         def place_apart(branch1, branch2):
             if left == [] and right == []:
@@ -445,8 +374,6 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                 right.append(branch1)
             elif branch2 in right:
                 left.append(branch1)
-            else:
-                print("Fuck apart")
 
         branches += [{cycle_vertex} for cycle_vertex in cycle_vertices - sink_branch - {source} if not any(cycle_vertex in branch for branch in branches)]
 
@@ -486,10 +413,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                         place_apart(branch_1, branch_2)
                                         break
                                     else:
-                                        try:
-                                            other_triplet = [other_triplet for other_triplet in triplets_containing_nodes if triplet != other_triplet][0]
-                                        except IndexError:
-                                            continue
+                                        other_triplet = [other_triplet for other_triplet in triplets_containing_nodes if triplet != other_triplet][0]
                                         if other_triplet.type in (r"1,2|3", r"1|2,3"):
                                             if {node1} in other_triplet.branches or {node2} in other_triplet.branches:
                                                 place_apart(branch_1, branch_2)
@@ -656,7 +580,6 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                     required_sink = set(required_sink)
                     for key, value in d.items():
                         if key in required_sink:
-                            # required_sink.remove(key)
                             return True
                         if contains_sink(value, required_sink):
                             return True
@@ -679,14 +602,6 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                         except IndexError:
                             pass
                         return cycle_path
-                        # cycle_vertex = set(value.keys()).intersection(cycle_vertices)
-                        # if cycle_vertex != set():
-                        #     cycle_vertex = cycle_vertex.pop()
-                        #     return find_sink_node(value, cycle_vertex)
-                        # else:
-                        #     for child_key in value.keys():
-                        #         if child_key not in self._labels:
-                        #             return find_sink_node(value, child_key)
                 sink_node_left = find_sink_node(solved_left_cycle, [])
                 sink_node_right = find_sink_node(solved_right_cycle, [])
                 sub_cycle = solved_right_cycle
@@ -694,88 +609,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                     sub_cycle = sub_cycle[cycle_vertex]
                 sub_cycle.pop(sink_node_right[-1])
                 sub_cycle[sink_node_left[-1]] = {}
-
-
-
                 tree[root].update(solved_right_cycle)
-
-
-
-
-            # if still_need_to_connect_left or still_need_to_connect_right:
-            #     def find_sink
-            #     sub_tree = tree[root]
-            #     while True:
-            #         if set(sub_tree.keys()).intersection(cycle_vertices) != set():
-            #             sink = set(sub_tree.keys()).intersection(cycle_vertices).pop()
-            #             if sink in sink_and_descendants:
-            #                 break
-            #             sub_tree = sub_tree[sink]
-            #             continue
-            #         elif set(sub_tree.keys()) - set(self._labels) != set():
-            #             for unlabelled_child in set(sub_tree.keys()) - set(self._labels):
-            #
-            #
-            #     tree[root].update({sink: {}})
-
-
-            # subtree = LevelOneNetworkReconstruction(
-            #     sink_and_descendants,
-            #     [triplet for triplet in self.__triplets if all(node in sink_and_descendants for node in triplet.labels)],
-            #     self.__numb_unlabelled_nodes,
-            #     self.__descendants,
-            #     self.__separation
-            # )
-            # solved_sink = subtree.reconstruct()
-            # self.__numb_unlabelled_nodes = subtree.__numb_unlabelled_nodes
-            # if list(solved_sink.keys())[0] not in cycle_vertices:
-            #     solved_sink = {f"*_{self.__numb_unlabelled_nodes}": solved_sink}
-            #     self.__numb_unlabelled_nodes += 1
-            # cycle = solved_sink
-            # for branch in reversed(left):
-            #     # if
-            #     # if len(branch) == 3 and branch.intersection(cycle_vertices) != set() and len([triplet for triplet in self.__triplets if all(node in branch for node in triplet)]) == 0:
-            #     #     solved_branch = {branch.intersection(cycle_vertices).pop(): {f"*_{self.__numb_unlabelled_nodes}": {node: {} for node in branch - cycle_vertices}}}
-            #     #     self.__numb_unlabelled_nodes += 1
-            #     # else:
-            #     subtree = LevelOneNetworkReconstruction(
-            #         branch,
-            #         [triplet for triplet in self.__triplets if all(node in branch for node in triplet)],
-            #         self.__numb_unlabelled_nodes,
-            #         self.__descendants,
-            #         self.__separation
-            #     )
-            #     solved_branch = subtree.reconstruct()
-            #     self.__numb_unlabelled_nodes = subtree.__numb_unlabelled_nodes
-            #     if list(solved_branch.keys())[0] not in cycle_vertices:
-            #         solved_branch = {f"*_{self.__numb_unlabelled_nodes}": solved_branch}
-            #         self.__numb_unlabelled_nodes += 1
-            #     if len([triplet for triplet in subtree.__triplets if (triplet.type == r"1/2\3" and list(solved_branch.keys())[0] == triplet.root)]) == 0  and len(list(solved_branch.values())[0]) >= 2:
-            #         solved_branch = {list(solved_branch.keys())[0]: {f"*_{self.__numb_unlabelled_nodes}": list(solved_branch.values())[0]}}
-            #         self.__numb_unlabelled_nodes += 1
-            #     solved_branch[list(solved_branch.keys())[0]].update(cycle)
-            #     cycle = solved_branch
-            # tree[root].update(cycle)
-            # cycle = solved_sink
-            # for branch in reversed(right):
-            #     subtree = LevelOneNetworkReconstruction(
-            #         branch,
-            #         [triplet for triplet in self.__triplets if all(node in branch for node in triplet)],
-            #         self.__numb_unlabelled_nodes,
-            #         self.__descendants,
-            #         self.__separation
-            #     )
-            #     solved_branch = subtree.reconstruct()
-            #     self.__numb_unlabelled_nodes = subtree.__numb_unlabelled_nodes
-            #     if list(solved_branch.keys())[0] not in cycle_vertices:
-            #         solved_branch = {f"*_{self.__numb_unlabelled_nodes}": solved_branch}
-            #         self.__numb_unlabelled_nodes += 1
-            #     if len([triplet for triplet in subtree.__triplets if (triplet.type == r"1/2\3" and list(solved_branch.keys())[0] == triplet.root)]) == 0 and len(list(solved_branch.values())[0]) >= 2:
-            #         solved_branch = {list(solved_branch.keys())[0]: {f"*_{self.__numb_unlabelled_nodes}": list(solved_branch.values())[0]}}
-            #         self.__numb_unlabelled_nodes += 1
-            #     solved_branch[list(solved_branch.keys())[0]].update(cycle)
-            #     cycle = solved_branch
-            # tree[root].update(cycle)
         else:
             for branch in branches:
                 if len(branch) == 1:

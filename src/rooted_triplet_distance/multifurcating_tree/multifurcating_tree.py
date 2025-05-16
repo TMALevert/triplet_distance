@@ -1,4 +1,4 @@
-from networkx import DiGraph, ancestors
+from networkx import ancestors
 from itertools import combinations
 
 from .__multifurcating_triplet import MultifurcatingTriplet

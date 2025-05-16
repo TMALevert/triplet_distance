@@ -193,5 +193,4 @@ def test_graph_creation():
 )
 def test_find_triplets(tree, labels, triplets):
     t = Tree(tree, labels)
-    print(t.triplets)
     assert all(triplet in triplets for triplet in t.triplets)

@@ -125,8 +125,6 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         return branches
 
     def reconstruct(self) -> dict[str, dict]:
-        # if len(self._labels) == 1:
-        #     return {self._labels[0]: {}}
         tree = {}
         roots = self.__find_possible_roots()
         while len(roots) >= 1:

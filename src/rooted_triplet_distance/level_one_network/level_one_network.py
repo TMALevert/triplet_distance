@@ -1,9 +1,5 @@
-from itertools import combinations
-
-from networkx import ancestors, descendants
 from networkx.algorithms.tree import SpanningTreeIterator
 from networkx.classes import DiGraph
-from numpy import unique
 
 from .. import GeneralTree
 from ..__abstract import AbstractGraph

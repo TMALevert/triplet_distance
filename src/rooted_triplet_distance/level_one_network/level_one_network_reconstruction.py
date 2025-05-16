@@ -611,7 +611,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                 left_triplets.append(triplet)
                     if all(node in right_nodes for node in triplet):
                         triplet_branch_containing_sink = [branch for branch in triplet.branches if sink_and_descendants.intersection(branch) != set()]
-                        if len(triplet_branch_containing_sink) != 1 or triplet.type == r"1/2\3":
+                        if len(triplet_branch_containing_sink) != 1 or triplet.type in (r"1/2\3", r"1|2|3"):
                             right_triplets.append(triplet)
                         else:
                             triplet_branch_containing_sink = triplet_branch_containing_sink[0]

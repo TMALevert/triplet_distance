@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from ..__abstract import AbstractTriplet
 
 
@@ -5,12 +7,12 @@ class MultifurcatingTriplet(AbstractTriplet):
     def __init__(self, triplet: str | AbstractTriplet):
         if isinstance(triplet, MultifurcatingTriplet):
             super().__init__(triplet)
-            self._parts = triplet._parts
-            self._labels = triplet._labels
+            self.parts = triplet.parts
+            self.labels = triplet.labels
             self._type = triplet._type
         else:
             super().__init__(triplet)
-            self._parts = {tuple(part.split(",")) if "," in part else part for part in self._string.split("|")}
+            self.parts = {tuple(part.split(",")) if "," in part else part for part in self._string.split("|")}
             if len(self.parts) == 3:
                 self._type = r"1|2|3"
             else:

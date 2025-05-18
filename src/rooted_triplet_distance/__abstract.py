@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 from matplotlib import pyplot as plt
 from networkx import DiGraph, multipartite_layout, draw_networkx, is_isomorphic
@@ -7,10 +8,11 @@ from networkx.exception import NetworkXError
 from networkx.relabel import convert_node_labels_to_integers
 
 
+@dataclass(slots=True)
 class AbstractTriplet(ABC):
     def __init__(self, triplet: str):
-        self._labels = None
-        self._parts = None
+        self.labels = None
+        self.parts = None
         self._string = str(triplet)
 
     def __str__(self):
@@ -21,18 +23,10 @@ class AbstractTriplet(ABC):
         return f'{cls}(r"{self._string}")'
 
     def __contains__(self, item):
-        return item in self._labels
+        return item in self.labels
 
     def __iter__(self):
         return iter(self.labels)
-
-    @property
-    def parts(self):
-        return self._parts
-
-    @property
-    def labels(self):
-        return self._labels
 
     @abstractmethod
     def __eq__(self, other: str):

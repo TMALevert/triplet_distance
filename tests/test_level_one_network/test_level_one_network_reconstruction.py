@@ -193,12 +193,6 @@ def run_test_random_network(_):
     except RecursionError:
         reconstructed_dict = reconstruction.reconstruct()
     obtained_tree = Network(reconstructed_dict, labels)
-    try:
-        assert tree == obtained_tree
-        assert len(obtained_tree.triplets) == len(triplets)
-        for triplet in obtained_tree.triplets:
-            assert triplet in triplets
-    except:
     assert tree == obtained_tree
     assert len(obtained_tree.triplets) == len(triplets)
     for triplet in obtained_tree.triplets:

@@ -40,7 +40,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                 z = z_set.pop()
                 for label in sn_set:
                     for triplet in self.__triplets:
-                        if not {label, z}.issubset(triplet.labels):
+                        if not (label in triplet.labels and z in triplet.labels):
                             continue
                         other_label = (triplet.labels - {label, z}).pop()
                         if other_label in sn_set or other_label in z_set:
@@ -441,7 +441,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                 else:
                     if any(triplet.type in {r"1|2\3", r"1/2|3"} for triplet in triplets_containing_nodes) and any(
                         triplet.type == r"1/2\3" for triplet in triplets_containing_nodes
-                    ):
+                    ) or any(triplet.type == r"1|2|3" for triplet in triplets_containing_nodes):
                         branches_containing_nodes = [
                             branch
                             for branch in cycle_branches
@@ -611,6 +611,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                             and {sink} not in other_triplet.branches
                                         ):
                                             place_apart(branch_1, branch_2)
+                                            break
                                 elif triplet_type == r"1/2\3":
                                     place_apart(branch_1, branch_2)
                                     break
@@ -700,6 +701,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                 elif (triplet.labels - triplet_branch_containing_sink).pop() not in cycle_vertices:
                                     left_triplets.append(triplet)
                             elif len(triplet_branch_containing_sink) == 1:
+                                if triplet.type in {r"1|2,3", r"1,2|3"}:
+                                    triplets_with_labels = [other_triplet for other_triplet in self.__triplets if
+                                                            other_triplet.labels == triplet.labels]
+                                    if len(triplets_with_labels) >= 2 and any(other_triplet.type == r"1|2|3" for other_triplet in triplets_with_labels):
+                                        continue
                                 branches_containing_other_triplet_labels = [
                                     branch
                                     for branch in left
@@ -737,6 +743,12 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                 elif (triplet.labels - triplet_branch_containing_sink).pop() not in cycle_vertices:
                                     right_triplets.append(triplet)
                             elif len(triplet_branch_containing_sink) == 1:
+                                if triplet.type in {r"1|2,3", r"1,2|3"}:
+                                    triplets_with_labels = [other_triplet for other_triplet in self.__triplets if
+                                                            other_triplet.labels == triplet.labels]
+                                    if len(triplets_with_labels) >= 2 and any(
+                                            other_triplet.type == r"1|2|3" for other_triplet in triplets_with_labels):
+                                        continue
                                 branches_containing_other_triplet_labels = [
                                     branch
                                     for branch in right

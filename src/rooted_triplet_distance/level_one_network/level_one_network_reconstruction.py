@@ -304,20 +304,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         if sinks_and_descendants == set():
             for label in set(self._labels) - {source}:
                 only_one_triplet = [
-                    [triplet for triplet in self.__triplets if triplet.labels == {label, node1, node2}][
-                        0
-                    ]
+                    [triplet for triplet in self.__triplets if triplet.labels == {label, node1, node2}][0]
                     for node1, node2, in combinations(
                         set(self._labels) - self.__descendants[label] - {label, source}, 2
                     )
-                    if len(
-                        [
-                            triplet
-                            for triplet in self.__triplets
-                            if triplet.labels == {label, node1, node2}
-                        ]
-                    )
-                    == 1
+                    if len([triplet for triplet in self.__triplets if triplet.labels == {label, node1, node2}]) == 1
                 ]
                 if len(only_one_triplet) == 0:
                     sink_and_descendants = [max_sn_set for max_sn_set in self.__maximal_sn_sets if label in max_sn_set][
@@ -417,9 +408,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         for node1, node2 in combinations(cycle_labels - sink_and_descendants, 2):
             for sink_node in sink_and_descendants:
                 triplets_containing_nodes = [
-                    triplet
-                    for triplet in self.__triplets
-                    if triplet.labels == {node1, node2, sink_node}
+                    triplet for triplet in self.__triplets if triplet.labels == {node1, node2, sink_node}
                 ]
                 if len(triplets_containing_nodes) == 1:
                     branches_containing_nodes = [
@@ -439,9 +428,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                         cycle_branches.append({node1, node2} - {source} - internal_cycle_vertices)
                         break
                 else:
-                    if any(triplet.type in {r"1|2\3", r"1/2|3"} for triplet in triplets_containing_nodes) and any(
-                        triplet.type == r"1/2\3" for triplet in triplets_containing_nodes
-                    ) or any(triplet.type == r"1|2|3" for triplet in triplets_containing_nodes):
+                    if (
+                        any(triplet.type in {r"1|2\3", r"1/2|3"} for triplet in triplets_containing_nodes)
+                        and any(triplet.type == r"1/2\3" for triplet in triplets_containing_nodes)
+                        or any(triplet.type == r"1|2|3" for triplet in triplets_containing_nodes)
+                    ):
                         branches_containing_nodes = [
                             branch
                             for branch in cycle_branches
@@ -538,9 +529,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
             for node1, node2 in product(branch_1, branch_2):
                 for sink in sink_branch.union({source}):
                     triplets_containing_nodes = [
-                        triplet
-                        for triplet in self.__triplets
-                        if triplet.labels == {node1, node2, sink}
+                        triplet for triplet in self.__triplets if triplet.labels == {node1, node2, sink}
                     ]
                     for triplet_type in {r"1/2/3", r"1\2\3", r"1|2\3", r"1/2|3", r"1|2,3", r"1,2|3", r"1/2\3"}:
                         triplet_of_type = [
@@ -702,9 +691,14 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                     left_triplets.append(triplet)
                             elif len(triplet_branch_containing_sink) == 1:
                                 if triplet.type in {r"1|2,3", r"1,2|3"}:
-                                    triplets_with_labels = [other_triplet for other_triplet in self.__triplets if
-                                                            other_triplet.labels == triplet.labels]
-                                    if len(triplets_with_labels) >= 2 and any(other_triplet.type == r"1|2|3" for other_triplet in triplets_with_labels):
+                                    triplets_with_labels = [
+                                        other_triplet
+                                        for other_triplet in self.__triplets
+                                        if other_triplet.labels == triplet.labels
+                                    ]
+                                    if len(triplets_with_labels) >= 2 and any(
+                                        other_triplet.type == r"1|2|3" for other_triplet in triplets_with_labels
+                                    ):
                                         continue
                                 branches_containing_other_triplet_labels = [
                                     branch
@@ -744,10 +738,14 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                     right_triplets.append(triplet)
                             elif len(triplet_branch_containing_sink) == 1:
                                 if triplet.type in {r"1|2,3", r"1,2|3"}:
-                                    triplets_with_labels = [other_triplet for other_triplet in self.__triplets if
-                                                            other_triplet.labels == triplet.labels]
+                                    triplets_with_labels = [
+                                        other_triplet
+                                        for other_triplet in self.__triplets
+                                        if other_triplet.labels == triplet.labels
+                                    ]
                                     if len(triplets_with_labels) >= 2 and any(
-                                            other_triplet.type == r"1|2|3" for other_triplet in triplets_with_labels):
+                                        other_triplet.type == r"1|2|3" for other_triplet in triplets_with_labels
+                                    ):
                                         continue
                                 branches_containing_other_triplet_labels = [
                                     branch

@@ -44,9 +44,7 @@ class GeneralTriplet(AbstractTriplet):
             self.type = triplet.type
         else:
             super().__init__(triplet)
-            self.parts = {
-                tuple(part.split(",")) if "," in part else part for part in re.split(r"[/\\|]", self._string)
-            }
+            self.parts = {tuple(part.split(",")) if "," in part else part for part in re.split(r"[/\\|]", self._string)}
             self.labels = set()
             for label in self.parts:
                 self.labels = self.labels.union({label} if isinstance(label, str) else set(label))

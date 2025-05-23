@@ -1,97 +1,8 @@
 import pytest
-from networkx import random_labeled_rooted_tree, biconnected_component_edges, biconnected_components
-from phylox.generators.randomTC.random_tc_network import generate_network_random_tree_child_sequence
-from phylox import DiNetwork
-from random import randint, sample, random
+from random import randint
 
+from results.network_generators import create_random_level_1_network
 from rooted_triplet_distance.level_one_network import Network, NetworkReconstruction
-
-
-def create_random_level_1_network(n, n_reticulations):
-    final_network = DiNetwork()
-    for i_subnetwork in range(n_reticulations):
-        current_numb_leaves = len([node for node in final_network.nodes if final_network.out_degree(node) == 0])
-        if i_subnetwork != n_reticulations - 1:
-            random_network = generate_network_random_tree_child_sequence(
-                randint(2, max(n - current_numb_leaves - 2 * (n_reticulations - i_subnetwork - 1), 3)),
-                1,
-                label_leaves=False,
-            )
-        else:
-            random_network = generate_network_random_tree_child_sequence(
-                max(n - current_numb_leaves, 2), 1, label_leaves=False
-            )
-        nodes_to_positive_integers = {node: i for i, node in enumerate(random_network.nodes)}
-        network = DiNetwork()
-        network.add_edges_from(
-            [
-                (nodes_to_positive_integers[edge[0]], nodes_to_positive_integers[edge[1]])
-                for edge in random_network.edges
-            ]
-        )
-        root = [node for node in network.nodes if network.in_degree(node) == 0][0]
-        if random() > 0.5:
-            network.remove_node(root)
-            root = [node for node in network.nodes if network.in_degree(node) == 0]
-            assert len(root) == 1
-            root = root[0]
-        if len(final_network.nodes) == 0:
-            final_network = network
-        else:
-            highest_node = max(final_network.nodes) + 1
-            root += highest_node
-            random_node = sample(list(final_network.nodes), 1)[0]
-            final_network.add_edges_from([(edge[0] + highest_node, edge[1] + highest_node) for edge in network.edges])
-            if random() > 0.5:
-                final_network.add_edge(random_node, root)
-            else:
-                final_network.remove_node(root)
-                final_network.add_edges_from(
-                    [(random_node, root_child + highest_node) for root_child in network.successors(root - highest_node)]
-                )
-
-    final_leaves = [node for node in final_network.nodes if final_network.out_degree(node) == 0]
-    for _ in range(n - len(final_leaves)):
-        random_node = sample([node for node in final_network.nodes if final_network.out_degree(node) != 0], 1)[0]
-        final_network.add_edge(random_node, max(final_network.nodes) + 1)
-        final_leaves.append(max(final_network.nodes))
-
-    labels = [node for node in final_leaves]
-    for node in final_network.nodes:
-        if final_network.out_degree(node) == 1:
-            labels.append(node)
-            child = list(final_network.successors(node))[0]
-            labels.append(child)
-    for cycle in biconnected_components(final_network.to_undirected()):
-        if len(cycle) == 4 or len(cycle) == 3:
-            internal_cycle_nodes = [
-                node
-                for node in cycle
-                if len(set(final_network.successors(node)).intersection(set(cycle))) != 2
-                and final_network.in_degree(node) != 2
-            ]
-            labels.append(sample(internal_cycle_nodes, 1)[0])
-        for node in cycle:
-            if final_network.in_degree(node) == 2:
-                labels.append(node)
-    final_labels = set(labels)
-    internal_labels = set(final_network.nodes) - final_labels
-    if len(internal_labels) > 0:
-        final_labels = final_labels.union(
-            set(sample(list(internal_labels), randint(0, int(0.8 * len(internal_labels)))))
-        )
-    final_labels = [str(label) for label in final_labels]
-
-    tree_dict_final = {}
-
-    def add_edge(u, tree_dict):
-        tree_dict[str(u)] = {}
-        for child in final_network.successors(u):
-            tree_dict[str(u)][str(child)] = add_edge(child, tree_dict[str(u)])[str(child)]
-        return tree_dict
-
-    add_edge([node for node in final_network.nodes if final_network.in_degree(node) == 0][0], tree_dict_final)
-    return tree_dict_final, final_labels
 
 
 def test_find_possible_roots(network1, network2):
@@ -183,7 +94,7 @@ def test_find_sink_of_cycle_no_labelled_source(network1_no_root, network2_no_roo
 
 
 def run_test_random_network(_):
-    tree_dict, labels = create_random_level_1_network(randint(6, 12), 3)
+    tree_dict, labels = create_random_level_1_network(randint(6, 12), randint(1, 3))
     tree = Network(tree_dict, labels)
     triplets = tree.triplets
 

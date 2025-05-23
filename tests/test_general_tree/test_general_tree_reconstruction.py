@@ -1,8 +1,8 @@
 from random import randint, sample
 
 import pytest
-from networkx import random_labeled_rooted_tree, DiGraph
 
+from results.network_generators import create_random_general_tree
 from rooted_triplet_distance import GeneralTree, GeneralTreeReconstruction
 
 
@@ -71,40 +71,8 @@ def test_tree():
         assert triplet in triplets
 
 
-def create_random_tree(n):
-    undirected_tree = random_labeled_rooted_tree(n)
-    root = undirected_tree.graph["root"]
-    tree = DiGraph()
-    tree.add_nodes_from(undirected_tree.nodes)
-    tree_dict_final = {}
-
-    def add_edge(u, tree_dict):
-        tree_dict[str(u)] = {}
-        neighbours = list(undirected_tree.neighbors(u))
-        for neighbour in neighbours:
-            if not (neighbour, u) in tree.edges:
-                tree.add_edge(u, neighbour)
-                tree_dict[str(u)][str(neighbour)] = add_edge(neighbour, tree_dict[str(u)])[str(neighbour)]
-        return tree_dict
-
-    add_edge(root, tree_dict_final)
-
-    labels = [str(node) for node in tree.nodes]
-    leaf_nodes = [str(node) for node in tree.nodes if tree.out_degree(node) == 0]
-    for node in tree.nodes:
-        if tree.out_degree(node) == 1:
-            leaf_nodes.append(str(node))
-            child = list(tree.successors(node))[0]
-            leaf_nodes.append(str(child))
-    final_labels = set(leaf_nodes)
-    internal_labels = set(labels) - final_labels
-    if len(internal_labels) > 0:
-        final_labels = final_labels.union(set(sample(list(internal_labels), randint(1, len(internal_labels)))))
-    return tree_dict_final, final_labels
-
-
 def run_test_random_tree():
-    tree_dict, labels = create_random_tree(randint(3, 20))
+    tree_dict, labels = create_random_general_tree(randint(3, 20))
 
     tree = GeneralTree(tree_dict, labels)
 
@@ -124,7 +92,7 @@ def test_random_tree_often(_):
 
 
 def run_test_random_tree_partial_triplets():
-    tree_dict, labels = create_random_tree(randint(3, 20))
+    tree_dict, labels = create_random_general_tree(randint(3, 20))
     tree = GeneralTree(tree_dict, labels)
 
     triplets = tree.triplets

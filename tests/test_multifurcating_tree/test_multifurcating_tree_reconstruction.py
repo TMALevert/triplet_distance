@@ -1,43 +1,9 @@
 from random import sample, randint
 
 import pytest
-from networkx import random_labeled_rooted_tree, DiGraph
 
+from results.network_generators import create_random_multifurcating_tree
 from rooted_triplet_distance import MultifurcatingTreeReconstruction, MultifurcatingTree
-
-
-def create_random_tree(n, a):
-    undirected_tree = random_labeled_rooted_tree(n)
-    root = undirected_tree.graph["root"]
-    tree = DiGraph()
-    tree.add_nodes_from(undirected_tree.nodes)
-    tree_dict_final = {}
-
-    def add_edge(u, tree_dict):
-        tree_dict[str(u)] = {}
-        neighbours = list(undirected_tree.neighbors(u))
-        numb_of_children = 0
-        for neighbour in neighbours:
-            if not (neighbour, u) in tree.edges:
-                numb_of_children += 1
-                tree.add_edge(u, neighbour)
-                tree_dict[str(u)][str(neighbour)] = add_edge(neighbour, tree_dict[str(u)])[str(neighbour)]
-        if numb_of_children == 1:
-            for _ in range(randint(1, a)):
-                tree_dict[str(u)][str(max(tree.nodes) + 1)] = {}
-                tree.add_edge(u, max(tree.nodes) + 1)
-        return tree_dict
-
-    add_edge(root, tree_dict_final)
-
-    labels = [str(node) for node in tree.nodes]
-    labels.remove(str(root))
-    leaf_nodes = [str(node) for node in tree.nodes if tree.out_degree[node] == 0]
-    final_labels = set(leaf_nodes)
-    internal_labels = set(labels) - final_labels
-    if len(internal_labels) > 0:
-        final_labels = final_labels.union(set(sample(list(internal_labels), randint(1, len(internal_labels)))))
-    return tree_dict_final, final_labels
 
 
 def test_D_sets():
@@ -237,7 +203,7 @@ def test_divide_in_branches_conflicting_triplets(triplets, labels):
 
 
 def run_test_random_tree():
-    tree_dict, labels = create_random_tree(randint(3, 20), 4)
+    tree_dict, labels = create_random_multifurcating_tree(randint(3, 20), 4)
 
     tree = MultifurcatingTree(tree_dict, labels)
 
@@ -257,7 +223,7 @@ def test_random_tree_often(_):
 
 
 def run_test_random_tree_partial_triplets():
-    tree_dict, labels = create_random_tree(randint(3, 20), 4)
+    tree_dict, labels = create_random_multifurcating_tree(randint(3, 20), 4)
 
     tree = MultifurcatingTree(tree_dict, labels)
 

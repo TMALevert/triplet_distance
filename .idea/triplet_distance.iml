@@ -13,7 +13,7 @@
   <component name="PyNamespacePackagesService">
     <option name="namespacePackageFolders">
       <list>
-        <option value="$MODULE_DIR$/tests/test_general_tree" />
+        <option value="$MODULE_DIR$/results" />
       </list>
     </option>
   </component>

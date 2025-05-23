@@ -20,6 +20,12 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         self.__is_cycle: bool = None
         self.__triplets = [NetworkTriplet(triplet) for triplet in triplets]
         self.__numb_unlabelled_nodes = numb_unlabelled_nodes
+        self._three_labels_to_triplets = {frozenset({i, j, k}): [] for i, j, k in combinations(self._labels, 3)}
+        self._two_labels_to_triplets = {frozenset({i, j}): [] for i, j in combinations(self._labels, 2)}
+        for triplet in self.__triplets:
+            self._three_labels_to_triplets[frozenset(triplet.labels)].append(triplet)
+            for i, j in combinations(triplet.labels, 2):
+                self._two_labels_to_triplets[frozenset({i, j})].append(triplet)
         if descendants is not None and separations is not None and sn_sets is not None:
             self.__descendants = {label: descendants[label] for label in self._labels}
             self.__separation = {label: separations[label] for label in self._labels}
@@ -39,9 +45,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
             while len(z_set) != 0:
                 z = z_set.pop()
                 for label in sn_set:
-                    for triplet in self.__triplets:
-                        if not (label in triplet.labels and z in triplet.labels):
-                            continue
+                    for triplet in self._two_labels_to_triplets[frozenset({label, z})]:
                         other_label = (triplet.labels - {label, z}).pop()
                         if other_label in sn_set or other_label in z_set:
                             continue
@@ -114,10 +118,10 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                 descendants_2 = self.__descendants[node_2].union({node_2})
                 if any(
                     {desc_1, desc_2} in other_triplet.branches
-                    for other_triplet in self.__triplets
-                    if triplet.type in {"1|2,3", "1,2|3"}
                     for desc_1 in descendants_1
                     for desc_2 in descendants_2
+                    for other_triplet in self._two_labels_to_triplets[frozenset({desc_1, desc_2})]
+                    if triplet.type in {"1|2,3", "1,2|3"}
                 ):
                     possible_roots.difference_update(triplet.root)
                     continue
@@ -145,26 +149,6 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
             placed_nodes.update(descedants_and_label)
 
         def resolve_fanned_triplet(triplet: NetworkTriplet) -> None | list:
-            if any(
-                sum([max_sn_set.issubset(self.__descendants[triplet_label]) for triplet_label in triplet.labels]) >= 1
-                for max_sn_set in self.__maximal_sn_sets
-            ):
-                return None
-            if len([other_triplet for other_triplet in self.__triplets if other_triplet.labels == triplet.labels]) > 1:
-                return None
-            for triplet_label in triplet.labels:
-                for label in (
-                    set(self._labels)
-                    - triplet.labels
-                    - set.union(*[self.__descendants[triplet_labels] for triplet_labels in triplet.labels])
-                ):
-                    if triplet_label in self.__descendants[label] and not any(
-                        other_label in self.__descendants[label]
-                        for other_label in triplet.labels
-                        if other_label != triplet_label
-                    ):
-                        if any(max_sn_set.issubset(self.__descendants[label]) for max_sn_set in self.__maximal_sn_sets):
-                            return None
             if (
                 len(
                     [
@@ -237,7 +221,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         double_resolved_triplets = []
         for node1, node2, node3 in combinations(self._labels, 3):
             triplets_containing_nodes = [
-                triplet for triplet in self.__triplets if triplet.labels == {node1, node2, node3}
+                triplet for triplet in self._three_labels_to_triplets[frozenset({node1, node2, node3})]
             ]
             if len(triplets_containing_nodes) == 2:
                 if any(triplet.type in {r"1|2\3", r"1/2|3"} for triplet in triplets_containing_nodes) and not any(
@@ -304,26 +288,22 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         if sinks_and_descendants == set():
             for label in set(self._labels) - {source}:
                 only_one_triplet = [
-                    [triplet for triplet in self.__triplets if triplet.labels == {label, node1, node2}][0]
+                    self._three_labels_to_triplets[frozenset({label, node1, node2})][0]
                     for node1, node2, in combinations(
                         set(self._labels) - self.__descendants[label] - {label, source}, 2
                     )
-                    if len([triplet for triplet in self.__triplets if triplet.labels == {label, node1, node2}]) == 1
+                    if len(self._three_labels_to_triplets[frozenset({label, node1, node2})]) == 1
                 ]
                 if len(only_one_triplet) == 0:
                     sink_and_descendants = [max_sn_set for max_sn_set in self.__maximal_sn_sets if label in max_sn_set][
                         0
                     ]
                     sinks_and_descendants.update(sink_and_descendants)
-                if len(only_one_triplet) >= 1:
+                elif len(only_one_triplet) >= 1:
                     for triplet in only_one_triplet:
                         if not all(
                             len(
-                                [
-                                    other_triplet
-                                    for other_triplet in self.__triplets
-                                    if other_triplet.labels == {other_label, *(triplet.labels - {label})}
-                                ]
+                                self._three_labels_to_triplets[frozenset({other_label, *(triplet.labels - {label})})]
                             )
                             <= 1
                             for other_label in set(self._labels) - triplet.labels
@@ -349,9 +329,8 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
             for other_label in set(self._labels) - sink_1 - sink_2 - {source}:
                 triplets = [
                     triplet
-                    for triplet in self.__triplets
-                    if triplet.labels == {s_1, s_2, other_label}
-                    and triplet.type in {r"1|2|3", r"1|2,3", r"1,2|3", r"1/2|3", r"1|2\3"}
+                    for triplet in self._three_labels_to_triplets[frozenset({s_1, s_2, other_label})]
+                    if triplet.type in {r"1|2|3", r"1|2,3", r"1,2|3", r"1/2|3", r"1|2\3"}
                 ]
                 fanned_triplet = [triplet for triplet in triplets if triplet.type in {r"1|2|3", r"1/2|3", r"1|2\3"}]
                 resolved_triplet = [triplet for triplet in triplets if triplet.type in {r"1,2|3", r"1|2,3"}]
@@ -381,9 +360,8 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                 for label in set(self._labels) - set().union(*sinks_and_descendants) - {source}:
                     resolved_triplet = [
                         triplet
-                        for triplet in self.__triplets
-                        if triplet.labels == {s_1, s_2, label}
-                        and triplet.type in {r"1,2|3", r"1|2,3", r"1/2|3", r"1|2\3"}
+                        for triplet in self._three_labels_to_triplets[frozenset({s_1, s_2, label})]
+                        if triplet.type in {r"1,2|3", r"1|2,3", r"1/2|3", r"1|2\3"}
                     ]
                     if len(resolved_triplet) >= 1:
                         triplet = resolved_triplet[0]
@@ -407,9 +385,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         internal_cycle_vertex_to_branch = []
         for node1, node2 in combinations(cycle_labels - sink_and_descendants, 2):
             for sink_node in sink_and_descendants:
-                triplets_containing_nodes = [
-                    triplet for triplet in self.__triplets if triplet.labels == {node1, node2, sink_node}
-                ]
+                triplets_containing_nodes = self._three_labels_to_triplets[frozenset({node1, node2, sink_node})]
                 if len(triplets_containing_nodes) == 1:
                     branches_containing_nodes = [
                         branch
@@ -518,19 +494,10 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
             if not any(cycle_vertex in branch for branch in branches)
         ]
 
-        ordering = {str(branch): [] for branch in branches}
-
-        def add_to_ordering(upper_branch, lower_branch):
-            ordering[str(upper_branch)].append(lower_branch)
-            for lower_lower_branch in ordering[str(lower_branch)]:
-                add_to_ordering(upper_branch, lower_lower_branch)
-
         for branch_1, branch_2 in combinations(branches, 2):
             for node1, node2 in product(branch_1, branch_2):
-                for sink in sink_branch.union({source}):
-                    triplets_containing_nodes = [
-                        triplet for triplet in self.__triplets if triplet.labels == {node1, node2, sink}
-                    ]
+                for sink in sink_branch.union({s for s in [source] if s in self._labels}):
+                    triplets_containing_nodes = self._three_labels_to_triplets[frozenset({node1, node2, sink})]
                     for triplet_type in {r"1/2/3", r"1\2\3", r"1|2\3", r"1/2|3", r"1|2,3", r"1,2|3", r"1/2\3"}:
                         triplet_of_type = [
                             triplet for triplet in triplets_containing_nodes if triplet.type == triplet_type
@@ -540,19 +507,13 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                 if triplet_type in {r"1/2/3", r"1\2\3"}:
                                     if {node1} == triplet.root:
                                         place_together(branch_1, branch_2)
-                                        add_to_ordering(branch_1, branch_2)
                                         break
                                     elif {node2} == triplet.root:
                                         place_together(branch_1, branch_2)
-                                        add_to_ordering(branch_2, branch_1)
                                         break
                                 elif triplet_type in {r"1|2\3", r"1/2|3"}:
                                     if {sink} in triplet.branches:
                                         place_together(branch_1, branch_2)
-                                        if node1 in triplet._descendants.keys():
-                                            add_to_ordering(branch_1, branch_2)
-                                        else:
-                                            add_to_ordering(branch_2, branch_1)
                                         break
                                     elif node1 in cycle_vertices and node2 in cycle_vertices:
                                         place_apart(branch_1, branch_2)
@@ -569,26 +530,10 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                                 break
                                             else:
                                                 place_together(branch_1, branch_2)
-                                                if {node1} in triplet.branches:
-                                                    add_to_ordering(branch_1, branch_2)
-                                                else:
-                                                    add_to_ordering(branch_2, branch_1)
                                                 break
                                 elif triplet_type in {r"1|2,3", r"1,2|3"}:
                                     if {sink} in triplet.branches:
                                         place_together(branch_1, branch_2)
-                                        other_triplet = [
-                                            other_triplet
-                                            for other_triplet in triplets_containing_nodes
-                                            if triplet != other_triplet
-                                        ][0]
-                                        if other_triplet.type in {r"1|2,3", r"1,2|3", r"1/2|3", r"1|2\3"}:
-                                            if {node1} in other_triplet.branches:
-                                                add_to_ordering(branch_1, branch_2)
-                                            else:
-                                                add_to_ordering(branch_2, branch_1)
-                                            break
-                                        continue
                                     else:
                                         other_triplet = [
                                             other_triplet
@@ -616,9 +561,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         if len(branches) == 1:
             left = branches
 
-        left_ordered = sorted(left, key=lambda x: len(ordering[str(x)]), reverse=True)
-        right_ordered = sorted(right, key=lambda x: len(ordering[str(x)]), reverse=True)
-        return left_ordered, right_ordered
+        return left, right
 
     def reconstruct(self) -> dict:
         self.__is_cycle = False
@@ -652,12 +595,13 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                     self.__numb_unlabelled_nodes,
                     self.__descendants,
                     self.__separation,
-                    self.__sn_sets,
+                    self.__sn_sets
                 )
                 if len(subtree.__find_possible_roots()) == 1:
                     tree[root].update(subtree.reconstruct())
                     self.__numb_unlabelled_nodes = subtree.__numb_unlabelled_nodes
                     return tree
+
             sinks_and_descendants = self.__find_sink_of_cycle(root)
             if len(sinks_and_descendants) > 1:
                 sinks_and_descendants, cycles_labels = self.__find_singular_cycle_sink(sinks_and_descendants, root)
@@ -691,11 +635,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                     left_triplets.append(triplet)
                             elif len(triplet_branch_containing_sink) == 1:
                                 if triplet.type in {r"1|2,3", r"1,2|3"}:
-                                    triplets_with_labels = [
-                                        other_triplet
-                                        for other_triplet in self.__triplets
-                                        if other_triplet.labels == triplet.labels
-                                    ]
+                                    triplets_with_labels = self._three_labels_to_triplets[frozenset(triplet.labels)]
                                     if len(triplets_with_labels) >= 2 and any(
                                         other_triplet.type == r"1|2|3" for other_triplet in triplets_with_labels
                                     ):
@@ -738,11 +678,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                                     right_triplets.append(triplet)
                             elif len(triplet_branch_containing_sink) == 1:
                                 if triplet.type in {r"1|2,3", r"1,2|3"}:
-                                    triplets_with_labels = [
-                                        other_triplet
-                                        for other_triplet in self.__triplets
-                                        if other_triplet.labels == triplet.labels
-                                    ]
+                                    triplets_with_labels = self._three_labels_to_triplets[frozenset(triplet.labels)]
                                     if len(triplets_with_labels) >= 2 and any(
                                         other_triplet.type == r"1|2|3" for other_triplet in triplets_with_labels
                                     ):
@@ -777,7 +713,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                     self.__numb_unlabelled_nodes,
                     self.__descendants if left_triplets == [] or left_nodes == sink_and_descendants else None,
                     self.__separation if left_triplets == [] or left_nodes == sink_and_descendants else None,
-                    self.__sn_sets if left_triplets == [] or left_nodes == sink_and_descendants else None,
+                    self.__sn_sets if left_triplets == [] or left_nodes == sink_and_descendants else None
                 )
                 solved_left_cycle = left_cycle.reconstruct()
                 self.__numb_unlabelled_nodes = left_cycle.__numb_unlabelled_nodes
@@ -788,7 +724,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                     self.__numb_unlabelled_nodes,
                     self.__descendants if right_triplets == [] or right_nodes == sink_and_descendants else None,
                     self.__separation if right_triplets == [] or right_nodes == sink_and_descendants else None,
-                    self.__sn_sets if right_triplets == [] or right_nodes == sink_and_descendants else None,
+                    self.__sn_sets if right_triplets == [] or right_nodes == sink_and_descendants else None
                 )
                 solved_right_cycle = right_cycle.reconstruct()
                 self.__numb_unlabelled_nodes = right_cycle.__numb_unlabelled_nodes
@@ -858,8 +794,7 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                             for other_label in set(self._labels) - branch:
                                 if any(
                                     triplet.type == r"1|2|3"
-                                    for triplet in self.__triplets
-                                    if triplet.labels == {label1, label2, other_label}
+                                    for triplet in self._three_labels_to_triplets[frozenset({label1, label2, other_label})]
                                 ):
                                     sub_dict = list(sub_dict.values())[0]
                                     break

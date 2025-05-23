@@ -17,7 +17,7 @@ class MultifurcatingTriplet(AbstractTriplet):
                 self._type = r"1|2|3"
             else:
                 self._type = r"1|2,3"
-            self._labels = set(self._string.replace("|", ",").split(","))
+            self.labels = set(self._string.replace("|", ",").split(","))
 
     def apart(self, label: str):
         if label not in self:

@@ -1,33 +1,7 @@
 import re
 from dataclasses import dataclass
 
-from ..__abstract import AbstractTriplet
-
-_re_patern_to_triplet_types = {
-    re.compile(r"(.*)\|(.*),(.*)"): r"1|2,3",
-    re.compile(r"(.*)\|(.*)\|(.*)"): r"1|2|3",
-    re.compile(r"(.*)/(.*)\|(.*)"): r"1/2|3",
-    re.compile(r"(.*)/(.*)/(.*)"): r"1/2/3",
-    re.compile(r"(.*)/(.*)\\(.*)"): r"1/2\3",
-    re.compile(r"(.*)\|(.*)\\(.*)"): r"1|2\3",
-    re.compile(r"(.*),(.*)\|(.*)"): r"1,2|3",
-    re.compile(r"(.*)\\(.*)\\(.*)"): r"1\2\3",
-}
-
-_triplet_types_to_re_pattern = {
-    triplet_type: re_pattern for re_pattern, triplet_type in _re_patern_to_triplet_types.items()
-}
-
-_triplet_to_tuples = {
-    r"1|2,3": lambda x, y, z: (None, (x, (None, tuple(sorted((y, z)))))),
-    r"1|2|3": lambda x, y, z: (None, tuple(sorted((x, y, z)))),
-    r"1/2|3": lambda x, y, z: (None, (z, (y, tuple({x})))),
-    r"1/2/3": lambda x, y, z: (z, (y, tuple({x}))),
-    r"1/2\3": lambda x, y, z: (y, tuple(sorted((x, z)))),
-    r"1|2\3": lambda x, y, z: (None, (x, (y, tuple({z})))),
-    r"1,2|3": lambda x, y, z: (None, (z, (None, tuple(sorted((x, y)))))),
-    r"1\2\3": lambda x, y, z: (x, (y, tuple({z}))),
-}
+from ..__abstract import AbstractTriplet, _triplet_types_to_re_pattern
 
 
 class GeneralTriplet(AbstractTriplet):
@@ -36,7 +10,6 @@ class GeneralTriplet(AbstractTriplet):
             super().__init__(triplet)
             self.parts = triplet.parts
             self.labels = triplet.labels
-            self._tree_relation = triplet._tree_relation
             self._branches = triplet._branches
             self._possible_root = triplet._possible_root
             self._descendants = triplet._descendants
@@ -48,7 +21,6 @@ class GeneralTriplet(AbstractTriplet):
             self.labels = set()
             for label in self.parts:
                 self.labels = self.labels.union({label} if isinstance(label, str) else set(label))
-            self._tree_relation = self.__define_relations()
             self._branches = self.__get_branches()
             self._possible_root = self.__get_possible_root()
             self._descendants = self.__get_descendants()
@@ -136,16 +108,6 @@ class GeneralTriplet(AbstractTriplet):
         elif self.type == r"1\2\3":
             return [self.labels]
 
-    def __define_relations(self) -> dict:
-        for template in _re_patern_to_triplet_types.keys():
-            if template.fullmatch(self._string):
-                self.type = _re_patern_to_triplet_types[template]
-                nodes = template.fullmatch(self._string).groups()
-                relation_function = _triplet_to_tuples[self.type]
-                return relation_function(*nodes)
-        else:
-            raise ValueError(f"Invalid triplet: {self._string}")
-
     def __eq__(self, other):
         if not isinstance(other, (AbstractTriplet, str)):
             raise TypeError(
@@ -153,3 +115,6 @@ class GeneralTriplet(AbstractTriplet):
             )
         other = GeneralTriplet(other)
         return self._tree_relation == other._tree_relation
+
+    def __hash__(self):
+        return super().__hash__()

@@ -19,7 +19,7 @@ from rooted_triplet_distance import GeneralTriplet
 def test_init(triplet, possible_root, branches, relation):
     t = GeneralTriplet(triplet)
     assert t.labels == {"1", "2", "3"}
-    assert t._GeneralTriplet__type == triplet
+    assert t.type == triplet
     assert t._tree_relation == relation
     for branch in t._branches:
         assert branch in branches
@@ -42,7 +42,7 @@ def test_init(triplet, possible_root, branches, relation):
 def test_init_longer_labels(triplet, type, possible_root, branches, relation):
     t = GeneralTriplet(triplet)
     assert t.labels == {"11", "22", "33"}
-    assert t._GeneralTriplet__type == type
+    assert t.type == type
     assert t._tree_relation == relation
     for branch in t._branches:
         assert branch in branches

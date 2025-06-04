@@ -38,9 +38,8 @@ class LevelOneNetwork(AbstractGraph):
         return spanning_trees
 
     def _find_triplets(self) -> list[NetworkTriplet]:
-        triplets = []
+        triplets = set()
         for spanning_tree in self.spanning_trees:
             for triplet in spanning_tree.triplets:
-                if triplet not in triplets:
-                    triplets.append(triplet)
-        return triplets
+                triplets.add(triplet)
+        return list(triplets)

@@ -51,3 +51,6 @@ class MultifurcatingTriplet(AbstractTriplet):
                 if part not in self.parts:
                     return False
         return True
+
+    def __hash__(self):
+        return super().__hash__()

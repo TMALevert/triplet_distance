@@ -39,10 +39,10 @@ def test_resolve_cycle(network1, network2):
         cycle_branches,
         sink_and_descendants,
         internal_cycle_vertices,
-    ) = reconstruction._LevelOneNetworkReconstruction__resolve_cycle({"d", "c"}, set(labels), "p")
+    ) = reconstruction._LevelOneNetworkReconstruction__resolve_cycle({"d", "c"}, "p")
     assert all(cycle_branch in [{"f"}, {"1", "a"}, {"g", "h"}, {"e", "b"}] for cycle_branch in cycle_branches)
     assert sink_and_descendants == {"c", "d"}
-    assert internal_cycle_vertices == {"d", "1", "p"}
+    assert internal_cycle_vertices == {"d", "1"}
     network1.visualize(show=False, save=True, save_name="network1.png")
     network2.visualize(show=False, save=True, save_name="network2.png")
     labels, triplets = network2.labels, network2.triplets
@@ -51,10 +51,10 @@ def test_resolve_cycle(network1, network2):
         cycle_branches,
         sink_and_descendants,
         internal_cycle_vertices,
-    ) = reconstruction._LevelOneNetworkReconstruction__resolve_cycle({"b", "e"}, set(labels), "p")
+    ) = reconstruction._LevelOneNetworkReconstruction__resolve_cycle({"b", "e"}, "p")
     assert all(cycle_branch in [{"f"}, {"1", "a"}, {"g", "h"}, {"c", "d"}] for cycle_branch in cycle_branches)
     assert sink_and_descendants == {"e", "b"}
-    assert internal_cycle_vertices == {"b", "1", "p"}
+    assert internal_cycle_vertices == {"b", "1"}
 
 
 def test_reconstruct(network1, network2):

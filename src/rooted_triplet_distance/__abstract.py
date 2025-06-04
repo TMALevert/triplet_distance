@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import re
 
 from matplotlib import pyplot as plt
 from networkx import DiGraph, multipartite_layout, draw_networkx, is_isomorphic
@@ -8,12 +9,50 @@ from networkx.exception import NetworkXError
 from networkx.relabel import convert_node_labels_to_integers
 
 
+_re_patern_to_triplet_types = {
+    re.compile(r"(.*)\|(.*),(.*)"): r"1|2,3",
+    re.compile(r"(.*)\|(.*)\|(.*)"): r"1|2|3",
+    re.compile(r"(.*)/(.*)\|(.*)"): r"1/2|3",
+    re.compile(r"(.*)/(.*)/(.*)"): r"1/2/3",
+    re.compile(r"(.*)/(.*)\\(.*)"): r"1/2\3",
+    re.compile(r"(.*)\|(.*)\\(.*)"): r"1|2\3",
+    re.compile(r"(.*),(.*)\|(.*)"): r"1,2|3",
+    re.compile(r"(.*)\\(.*)\\(.*)"): r"1\2\3",
+}
+
+_triplet_types_to_re_pattern = {
+    triplet_type: re_pattern for re_pattern, triplet_type in _re_patern_to_triplet_types.items()
+}
+
+_triplet_to_tuples = {
+    r"1|2,3": lambda x, y, z: (None, (x, (None, tuple(sorted((y, z)))))),
+    r"1|2|3": lambda x, y, z: (None, tuple(sorted((x, y, z)))),
+    r"1/2|3": lambda x, y, z: (None, (z, (y, tuple({x})))),
+    r"1/2/3": lambda x, y, z: (z, (y, tuple({x}))),
+    r"1/2\3": lambda x, y, z: (y, tuple(sorted((x, z)))),
+    r"1|2\3": lambda x, y, z: (None, (x, (y, tuple({z})))),
+    r"1,2|3": lambda x, y, z: (None, (z, (None, tuple(sorted((x, y)))))),
+    r"1\2\3": lambda x, y, z: (x, (y, tuple({z}))),
+}
+
+
 @dataclass(slots=True)
 class AbstractTriplet(ABC):
     def __init__(self, triplet: str):
         self.labels = None
         self.parts = None
         self._string = str(triplet)
+        self._tree_relation = self.__define_relations()
+
+    def __define_relations(self) -> dict:
+        for template in _re_patern_to_triplet_types.keys():
+            if template.fullmatch(self._string):
+                self.type = _re_patern_to_triplet_types[template]
+                nodes = template.fullmatch(self._string).groups()
+                relation_function = _triplet_to_tuples[self.type]
+                return relation_function(*nodes)
+        else:
+            raise ValueError(f"Invalid triplet: {self._string}")
 
     def __str__(self):
         return self._string
@@ -27,6 +66,9 @@ class AbstractTriplet(ABC):
 
     def __iter__(self):
         return iter(self.labels)
+
+    def __hash__(self):
+        return hash(self._tree_relation)
 
     @abstractmethod
     def __eq__(self, other: str):

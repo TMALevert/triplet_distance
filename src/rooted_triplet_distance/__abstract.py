@@ -148,6 +148,14 @@ class AbstractGraph(ABC):
             node_match=lambda x, y: x == y if (x["label"] in self.labels or y["label"] in self.labels) else True,
         )
 
+    def __sub__(self, other):
+        if not isinstance(other, AbstractGraph):
+            raise TypeError(f"Cannot subtract {type(other)} from {type(self)}")
+        triplets1 = set(self.triplets)
+        triplets2 = set(other.triplets)
+        sym_diff = triplets1.symmetric_difference(triplets2)
+        return len(sym_diff) / (len(triplets1.union(triplets2)))
+
 
 class AbstractGraphReconstruction(ABC):
     def __init__(self, labels: list[str]):

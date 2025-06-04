@@ -6,6 +6,7 @@ from networkx.generators.trees import random_labeled_rooted_tree
 from phylox import DiNetwork
 from phylox.generators.randomTC import generate_network_random_tree_child_sequence
 
+
 def create_random_multifurcating_tree(n, a):
     undirected_tree = random_labeled_rooted_tree(n)
     root = undirected_tree.graph["root"]
@@ -68,7 +69,9 @@ def create_random_general_tree(n):
     final_labels = set(leaf_nodes)
     internal_labels = set(labels) - final_labels
     if len(internal_labels) > 0:
-        final_labels = final_labels.union(set(sample(list(internal_labels), randint(max(1, 3-len(final_labels)), len(internal_labels)))))
+        final_labels = final_labels.union(
+            set(sample(list(internal_labels), randint(max(1, 3 - len(final_labels)), len(internal_labels))))
+        )
     return tree_dict_final, final_labels
 
 
@@ -143,7 +146,7 @@ def create_random_level_1_network(n, n_reticulations):
     internal_labels = set(final_network.nodes) - final_labels
     if len(internal_labels) > 0:
         final_labels = final_labels.union(
-            set(sample(list(internal_labels), randint(max(0, 3-len(final_labels)), int(0.8 * len(internal_labels)))))
+            set(sample(list(internal_labels), randint(max(0, 3 - len(final_labels)), int(0.8 * len(internal_labels)))))
         )
     final_labels = [str(label) for label in final_labels]
 

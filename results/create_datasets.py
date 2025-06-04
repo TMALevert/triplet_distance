@@ -4,13 +4,26 @@ from random import randint
 from timeit import Timer
 from pprint import pprint
 import csv
+import os
+from pathlib import Path
 
 import numpy as np
 from networkx import dag_longest_path
 from networkx.algorithms.components import biconnected_components
 
-from rooted_triplet_distance import MultifurcatingTree, GeneralTree, LevelOneNetwork, MultifurcatingTreeReconstruction, GeneralTreeReconstruction, LevelOneNetworkReconstruction
-from network_generators import create_random_multifurcating_tree, create_random_general_tree, create_random_level_1_network
+from rooted_triplet_distance import (
+    MultifurcatingTree,
+    GeneralTree,
+    LevelOneNetwork,
+    MultifurcatingTreeReconstruction,
+    GeneralTreeReconstruction,
+    LevelOneNetworkReconstruction,
+)
+from network_generators import (
+    create_random_multifurcating_tree,
+    create_random_general_tree,
+    create_random_level_1_network,
+)
 
 
 def get_timing_gen_alg(tree: GeneralTree):
@@ -56,9 +69,21 @@ def get_timing_network_alg(network: LevelOneNetwork):
 
 
 def create_multifurcating_tree_dataframe(file: TextIOWrapper, numb_trees: int, min_labels: int, max_labels: int):
-    columns=["network_id", "network_dict", "labels", "numb_labels", "numb_nodes", "numb_cycles", "max_cycle_size",
-                 "max_depth", "numb_multi_triplets", "numb_gen_triplets", "time_multi_alg", "time_gen_alg",
-                 "time_network_alg"]
+    columns = [
+        "network_id",
+        "network_dict",
+        "labels",
+        "numb_labels",
+        "numb_nodes",
+        "numb_cycles",
+        "max_cycle_size",
+        "max_depth",
+        "numb_multi_triplets",
+        "numb_gen_triplets",
+        "time_multi_alg",
+        "time_gen_alg",
+        "time_network_alg",
+    ]
     writer = csv.DictWriter(file, fieldnames=columns)
     writer.writeheader()
     for id in range(numb_trees):
@@ -85,9 +110,21 @@ def create_multifurcating_tree_dataframe(file: TextIOWrapper, numb_trees: int, m
 
 
 def create_general_tree_dataframe(file: TextIOWrapper, numb_trees: int, min_labels: int, max_labels: int):
-    columns=["network_id", "network_dict", "labels", "numb_labels", "numb_nodes", "numb_cycles", "max_cycle_size",
-                 "max_depth", "numb_multi_triplets", "numb_gen_triplets", "time_multi_alg", "time_gen_alg",
-                 "time_network_alg"]
+    columns = [
+        "network_id",
+        "network_dict",
+        "labels",
+        "numb_labels",
+        "numb_nodes",
+        "numb_cycles",
+        "max_cycle_size",
+        "max_depth",
+        "numb_multi_triplets",
+        "numb_gen_triplets",
+        "time_multi_alg",
+        "time_gen_alg",
+        "time_network_alg",
+    ]
     writer = csv.DictWriter(file, fieldnames=columns)
     writer.writeheader()
     for id in range(numb_trees):
@@ -104,7 +141,7 @@ def create_general_tree_dataframe(file: TextIOWrapper, numb_trees: int, min_labe
         row_data["numb_cycles"] = 0
         row_data["max_cycle_size"] = 0
         row_data["max_depth"] = len(dag_longest_path(gen_tree._tree))
-        row_data["numb_multi_triplets"] = len(gen_tree.triplets)
+        row_data["numb_multi_triplets"] = np.nan
         row_data["numb_gen_triplets"] = len(gen_tree.triplets)
         row_data["time_multi_alg"] = np.nan
         row_data["time_gen_alg"] = get_timing_gen_alg(gen_tree)
@@ -112,15 +149,36 @@ def create_general_tree_dataframe(file: TextIOWrapper, numb_trees: int, min_labe
         writer.writerow(row_data)
 
 
-def create_level_1_network_dataframe(file: TextIOWrapper, numb_networks: int, min_labels: int, max_labels: int, min_n_reticulations: int, max_n_reticulations: int):
-    columns=["network_id", "network_dict", "labels", "numb_labels", "numb_nodes", "numb_cycles", "max_cycle_size",
-                 "max_depth", "numb_multi_triplets", "numb_gen_triplets", "time_multi_alg", "time_gen_alg",
-                 "time_network_alg"]
+def create_level_1_network_dataframe(
+    file: TextIOWrapper,
+    numb_networks: int,
+    min_labels: int,
+    max_labels: int,
+    min_n_reticulations: int,
+    max_n_reticulations: int,
+):
+    columns = [
+        "network_id",
+        "network_dict",
+        "labels",
+        "numb_labels",
+        "numb_nodes",
+        "numb_cycles",
+        "max_cycle_size",
+        "max_depth",
+        "numb_multi_triplets",
+        "numb_gen_triplets",
+        "time_multi_alg",
+        "time_gen_alg",
+        "time_network_alg",
+    ]
     writer = csv.DictWriter(file, fieldnames=columns)
     writer.writeheader()
     for id in range(numb_networks):
         print(id)
-        dict, labels = create_random_level_1_network(randint(min_labels, max_labels), randint(min_n_reticulations, max_n_reticulations))
+        dict, labels = create_random_level_1_network(
+            randint(min_labels, max_labels), randint(min_n_reticulations, max_n_reticulations)
+        )
         network = LevelOneNetwork(dict, labels)
         row_data = dict.fromkeys(columns)
         row_data["network_id"] = id

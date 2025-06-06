@@ -51,6 +51,7 @@ def plot_time_vs_numb_gen_triplets(data: DataFrame, network_type: str):
     for time_type in __time_types:
         if not all(np.isnan(data[time_type])):
             plt.scatter(data["numb_gen_triplets"], data[time_type], label=__time_to_reconstruction[time_type])
+    plt.yscale("log")
     plt.xlabel("Number of generated triplets")
     plt.ylabel("Time [s]")
     plt.title(f"Reconstruction time for {network_type.replace('_', ' ')}s")
@@ -64,6 +65,7 @@ def plot_time_vs_numb_multi_triplets(data: DataFrame, network_type: str):
     for time_type in __time_types:
         if not all(np.isnan(data[time_type])):
             plt.scatter(data["numb_multi_triplets"], data[time_type], label=__time_to_reconstruction[time_type])
+    plt.yscale("log")
     plt.xlabel("Number of generated triplets")
     plt.ylabel("Time [s]")
     plt.title(f"Reconstruction time for {network_type.replace('_', ' ')}s")
@@ -166,10 +168,47 @@ def plot_numb_gen_triplets_vs_numb_cycles(data: DataFrame, network_type: str):
     plt.close()
 
 
+def plot_time_vs_numb_labels_per_algorithm(datas: dict):
+    plt.figure()
+    for time_type in __time_types:
+        for network_type, data in datas.items():
+            if not all(np.isnan(data[time_type])):
+                plt.scatter(
+                    data["numb_labels"],
+                    data[time_type],
+                    label=f"{network_type} - {__time_to_reconstruction[time_type]}",
+                )
+        plt.yscale("log")
+        plt.xlabel("Number of labels")
+        plt.ylabel("Time [s]")
+        plt.title(f"Reconstruction time for {__time_to_reconstruction[time_type]}\n per network type")
+        plt.legend()
+        plt.savefig(f"figures/{time_type}_vs_numb_labels_per_algorithm.png")
+        plt.close()
+
+
+def histogram_numb_labels(datas):
+    plt.figure()
+    # for network_type, data in datas.items():
+    plt.hist(
+        [data["numb_labels"] for data in datas.values()],
+        bins=15,
+        weights=[np.ones(len(data["numb_labels"])) / len(data["numb_labels"]) for data in datas.values()],
+        label=[" ".join(network_type.split("_")) + "s" for network_type in datas.keys()],
+    )
+    plt.xlabel("Number of labels")
+    plt.ylabel("Frequency")
+    plt.title("Distribution of number of labels per network type")
+    plt.legend()
+    plt.savefig(f"figures/numb_labels_histogram.png")
+
+
 if __name__ == "__main__":
     os.makedirs("figures", exist_ok=True)
+    datas = {}
     for type in ["multifurcating_tree", "general_tree", "network"]:
         data = load_data(type)
+        datas[type] = data
         print(f"Loaded {len(data)} rows for {type}.")
 
         plot_time_vs_numb_labels(data, type)
@@ -185,3 +224,5 @@ if __name__ == "__main__":
             plot_time_vs_numb_cycles(data, type)
             plot_time_vs_max_cycle_size(data, type)
             plot_numb_gen_triplets_vs_numb_cycles(data, type)
+    plot_time_vs_numb_labels_per_algorithm(datas)
+    histogram_numb_labels(datas)

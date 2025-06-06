@@ -11,12 +11,6 @@ def test_graph_creation():
         }
     }
     t = Tree(tree)
-    assert t.layers == {
-        "0": ["A"],
-        "1": ["B", "C"],
-        "2": ["D", "E", "F", "G"],
-        "3": ["H", "I", "J", "K", "L", "M", "N", "O"],
-    }
     assert all(
         label in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O"] for label in t.labels
     )

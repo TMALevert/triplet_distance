@@ -3,9 +3,8 @@ from dataclasses import dataclass
 import re
 
 from matplotlib import pyplot as plt
-from networkx import DiGraph, multipartite_layout, draw_networkx, is_isomorphic
-from networkx.drawing import spring_layout
-from networkx.exception import NetworkXError
+from networkx import DiGraph, draw_networkx, is_isomorphic
+from networkx.drawing import bfs_layout
 from networkx.relabel import convert_node_labels_to_integers
 
 
@@ -77,7 +76,6 @@ class AbstractTriplet(ABC):
 
 class AbstractGraph(ABC):
     def __init__(self, tree: dict, labels: list[str] = None):
-        self.layers = {}
         self._tree_dict = tree
         self._labels = labels
         self._triplets = []
@@ -102,27 +100,15 @@ class AbstractGraph(ABC):
     def _construct_tree(self, tree_dict, layer=0):
         tree = DiGraph()
         for node, children in tree_dict.items():
-            current_layer = self.layers.get(str(layer), [])
-            self.layers[str(layer)] = current_layer + [node] if node not in current_layer else current_layer
             for child in children:
                 tree.add_edge(node, child)
-                next_layer = self.layers.get(str(layer + 1), [])
-                self.layers[str(layer + 1)] = next_layer + [child] if child not in next_layer else next_layer
                 if tree_dict[node][child] != {}:
                     sub_tree = self._construct_tree({child: tree_dict[node][child]}, layer=layer + 1)
                     tree.add_edges_from(sub_tree.edges)
         return tree
 
     def visualize(self, show=True, save=False, save_name=None, title: str = None):
-        try:
-            pos = multipartite_layout(self._tree, self.layers, align="horizontal", scale=-1)
-        except NetworkXError:
-            # pos = multipartite_layout(self._tree)
-            # pos = spring_layout(self._tree)
-            from networkx import bfs_layout, forceatlas2_layout
-
-            pos = bfs_layout(self._tree, list(self._tree_dict.keys())[0], align="horizontal", scale=-1)
-            # pos = forceatlas2_layout(self._tree)
+        pos = bfs_layout(self._tree, list(self._tree_dict.keys())[0], align="horizontal", scale=-1)
         plt.figure()
         draw_networkx(
             self._tree,

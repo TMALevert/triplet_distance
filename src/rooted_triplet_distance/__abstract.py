@@ -4,6 +4,9 @@ import re
 
 from matplotlib import pyplot as plt
 from networkx import DiGraph, draw_networkx, is_isomorphic
+from networkx.algorithms.components import biconnected_components
+from networkx.algorithms.dag import descendants
+from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.drawing import bfs_layout
 from networkx.relabel import convert_node_labels_to_integers
 
@@ -33,6 +36,26 @@ _triplet_to_tuples = {
     r"1,2|3": lambda x, y, z: (None, (z, (None, tuple(sorted((x, y)))))),
     r"1\2\3": lambda x, y, z: (x, (y, tuple({z}))),
 }
+
+
+def _get_tree_dict(tree: DiGraph) -> dict:
+    """
+    Convert a directed graph into a tree dictionary representation.
+    :param tree: The directed graph to convert.
+    :return: A dictionary representing the tree structure.
+    """
+    tree_dict = {}
+
+    def __add_children(node, sub_dict):
+        children = list(tree.successors(node))
+        if children:
+            tree_dict[node] = {child: {} for child in children}
+            for child in children:
+                __add_children(child, tree_dict[node])
+
+    root = [node for node in tree.nodes if tree.in_degree(node) == 0][0]
+    __add_children(root, tree_dict)
+    return tree_dict
 
 
 @dataclass(slots=True)
@@ -106,6 +129,71 @@ class AbstractGraph(ABC):
                     sub_tree = self._construct_tree({child: tree_dict[node][child]}, layer=layer + 1)
                     tree.add_edges_from(sub_tree.edges)
         return tree
+
+    def perform_spr_move(
+        self,
+        node: str,
+        new_parent_node: str | None = None,
+        insert_edge: tuple[str, str] | None = None,
+        allow_breaking_cycles: bool = False,
+    ) -> tuple[dict, int]:
+        """
+        Perform an SPR move.
+        :param node: The node for which to find SPR moves.
+        :param new_parent_node: The new parent node for the SPR move (optional).
+        :param insert_edge: A tuple representing the edge in between which the subtree should be added (optional).
+        :return: The network after performing the SPR move and the distance between its original and new parent node.
+        """
+        if new_parent_node is None and insert_edge is None:
+            raise ValueError("Either new_parent_node or insert_edge must be provided.")
+        if new_parent_node is not None and insert_edge is not None:
+            raise ValueError("Only one of new_parent_node or insert_edge can be provided.")
+        if node not in self._tree:
+            raise ValueError(f"Node {node} not found in the tree.")
+        if any(
+            node in cycle
+            and not cycle.issubset(descendants(self._tree, node).union({node}))
+            and not self._tree.in_degree(node) == 2
+            for cycle in biconnected_components(self._tree.to_undirected())
+            if len(cycle) > 2
+        ):
+            raise ValueError(f"Node {node} is part of a cycle, cannot perform SPR move.")
+        if self._tree.in_degree(node) >= 2 and not allow_breaking_cycles:
+            raise ValueError(
+                f"Node {node} has more than one parent, cannot perform SPR move. Set allow_breaking_cycles=True to allow breaking cycles."
+            )
+        parent_edges = list(self._tree.in_edges(node))
+        if new_parent_node is not None:
+            if new_parent_node not in self._tree:
+                raise ValueError(f"New parent node {new_parent_node} not found in the tree.")
+            if new_parent_node in descendants(self._tree, node):
+                raise ValueError(f"New parent node {new_parent_node} is a descendant of the node {node}.")
+            distance = min(
+                len(shortest_path(self._tree.to_undirected(), parent_node, new_parent_node))
+                for parent_node, _ in parent_edges
+            )
+        if insert_edge is not None:
+            if insert_edge not in self._tree.edges:
+                raise ValueError(f"Insert edge {insert_edge} not found in the tree.")
+            if any(parent_edge == insert_edge for parent_edge in parent_edges):
+                raise ValueError(f"Insert edge {insert_edge} is the same as the parent edge.")
+            if insert_edge[0] in descendants(self._tree, node) or insert_edge[1] in descendants(self._tree, node):
+                raise ValueError(f"Insert edge {insert_edge} is a descendant of the node {node}.")
+            distance = min(
+                len(shortest_path(self._tree.to_undirected(), parent_node, insert_edge[1]))
+                for parent_node, _ in parent_edges
+            )
+        tree = self._tree.copy()
+        for parent_edge in parent_edges:
+            tree.remove_edge(*parent_edge)
+        if insert_edge is not None:
+            tree.remove_edge(*insert_edge)
+            tree.add_edge(insert_edge[0], "SPR_TEMP")
+            tree.add_edge("SPR_TEMP", insert_edge[1])
+            tree.add_edge("SPR_TEMP", node)
+        elif new_parent_node is not None:
+            tree.add_edge(new_parent_node, node)
+        return _get_tree_dict(tree), distance
 
     def visualize(self, show=True, save=False, save_name=None, title: str = None):
         pos = bfs_layout(self._tree, list(self._tree_dict.keys())[0], align="horizontal", scale=-1)

@@ -204,9 +204,22 @@ def create_level_1_network_dataframe(
 
 
 if __name__ == "__main__":
-    with open(f"network_data_{datetime.now().strftime('%d_%m_%Hu%Mm%Ss')}.csv", "w", newline='') as file:
-        create_level_1_network_dataframe(file,100, 3, 30, 1, 4)
-    with open(f"multifurcating_tree_data_{datetime.now().strftime('%d_%m_%Hu%Mm%Ss')}.csv", "w", newline='') as file:
-        create_multifurcating_tree_dataframe(file,150, 4, 40)
-    with open(f"general_tree_data_{datetime.now().strftime('%d_%m_%Hu%Mm%Ss')}.csv", "w", newline='') as file:
-        create_general_tree_dataframe(file, 150, 3, 40)
+    os.makedirs("data", exist_ok=True)
+    with open(
+        Path(__file__).parent / "data" / f"multifurcating_tree_data_{datetime.now().strftime('%d_%m_%Hu%Mm%Ss')}.csv",
+        "w",
+        newline="",
+    ) as file:
+        create_multifurcating_tree_dataframe(file, 100, 4, 60)
+    with open(
+        Path(__file__).parent / "data" / f"general_tree_data_{datetime.now().strftime('%d_%m_%Hu%Mm%Ss')}.csv",
+        "w",
+        newline="",
+    ) as file:
+        create_general_tree_dataframe(file, 100, 4, 60)
+        with open(
+            Path(__file__).parent / "data" / f"network_data_{datetime.now().strftime('%d_%m_%Hu%Mm%Ss')}.csv",
+            "w",
+            newline="",
+        ) as file:
+            create_level_1_network_dataframe(file, 100, 4, 50, 1, 6)

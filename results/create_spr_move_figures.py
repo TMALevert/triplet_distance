@@ -107,7 +107,7 @@ def plot_all_spr_moves(tree: Tree, save_name: str) -> None:
         poly = np.polyfit(*zip(*points), 1)
         x = np.linspace(min(points, key=lambda x: x[0])[0], max(points, key=lambda x: x[0])[0], 100)
         line = plt.plot(x, np.polyval(poly, x), linestyle="--")[0]
-        colour = line.get_color() # Get the color of the line for the legend
+        colour = line.get_color()  # Get the color of the line for the legend
         plt.plot([], [], marker="o", linestyle="--", color=colour, label=f"$n={size_of_subtree}$")
     plt.xlabel("SPR move length")
     plt.ylabel("Triplet distance")

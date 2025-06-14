@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import re
 
+import networkx as nx
 from matplotlib import pyplot as plt
 from networkx import DiGraph, draw_networkx, is_isomorphic
 from networkx.algorithms.components import biconnected_components
@@ -68,9 +69,10 @@ class AbstractTriplet(ABC):
 
     def __define_relations(self) -> dict:
         for template in _re_patern_to_triplet_types.keys():
-            if template.fullmatch(self._string):
+            match = template.fullmatch(self._string)
+            if match:
                 self.type = _re_patern_to_triplet_types[template]
-                nodes = template.fullmatch(self._string).groups()
+                nodes = match.groups()
                 relation_function = _triplet_to_tuples[self.type]
                 return relation_function(*nodes)
         else:
@@ -166,6 +168,10 @@ class AbstractGraph(ABC):
         if new_parent_node is not None:
             if new_parent_node not in self._tree:
                 raise ValueError(f"New parent node {new_parent_node} not found in the tree.")
+            if new_parent_node == node:
+                raise ValueError("New parent node cannot be the same as the node.")
+            if new_parent_node in [edge[0] for edge in parent_edges]:
+                raise ValueError(f"New parent node {new_parent_node} is already a parent of the node {node}.")
             if new_parent_node in descendants(self._tree, node):
                 raise ValueError(f"New parent node {new_parent_node} is a descendant of the node {node}.")
             distance = min(

@@ -15,6 +15,7 @@ class GeneralTriplet(AbstractTriplet):
             self._descendants = triplet._descendants
             self._separations = triplet._separations
             self.type = triplet.type
+            self.__nodes = triplet.__nodes
         else:
             super().__init__(triplet)
             self.parts = {tuple(part.split(",")) if "," in part else part for part in re.split(r"[/\\|]", self._string)}
@@ -23,6 +24,7 @@ class GeneralTriplet(AbstractTriplet):
                 self.labels = self.labels.union({label} if isinstance(label, str) else set(label))
             self._branches = self.__get_branches()
             self._possible_root = self.__get_possible_root()
+            self.__nodes = _triplet_types_to_re_pattern[self.type].fullmatch(self._string).groups()
             self._descendants = self.__get_descendants()
             self._separations = self.__get_separations()
 
@@ -35,7 +37,7 @@ class GeneralTriplet(AbstractTriplet):
         return [branch.copy() for branch in self._branches]
 
     def __get_descendants(self) -> dict[str, set]:
-        nodes = _triplet_types_to_re_pattern[self.type].fullmatch(self._string).groups()
+        nodes = self.__nodes
         if self.type == "1|2,3":
             return {}
         elif self.type == "1|2|3":
@@ -54,7 +56,7 @@ class GeneralTriplet(AbstractTriplet):
             return {nodes[0]: {nodes[1], nodes[2]}, nodes[1]: {nodes[2]}}
 
     def __get_separations(self) -> dict[str, set]:
-        nodes = _triplet_types_to_re_pattern[self.type].fullmatch(self._string).groups()
+        nodes = self.__nodes
         if self.type == "1|2,3":
             return {nodes[0]: {nodes[1], nodes[2]}, nodes[1]: {nodes[0], nodes[2]}, nodes[2]: {nodes[0], nodes[1]}}
         elif self.type == "1|2|3":

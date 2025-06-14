@@ -219,7 +219,7 @@ class AbstractGraph(ABC):
         if save:
             plt.savefig(f"{save_name}.png")
 
-    def __eq__(self, other):
+    def __eq__(self, other: "AbstractGraph") -> bool:
         if self.labels != other.labels:
             return False
         return is_isomorphic(
@@ -228,13 +228,75 @@ class AbstractGraph(ABC):
             node_match=lambda x, y: x == y if (x["label"] in self.labels or y["label"] in self.labels) else True,
         )
 
-    def __sub__(self, other):
+    def __sub__(self, other: "AbstractGraph") -> float:
         if not isinstance(other, AbstractGraph):
             raise TypeError(f"Cannot subtract {type(other)} from {type(self)}")
         triplets1 = set(self.triplets)
         triplets2 = set(other.triplets)
         sym_diff = triplets1.symmetric_difference(triplets2)
-        return len(sym_diff) / (len(triplets1.union(triplets2)))
+        return len(sym_diff) / len(triplets1.union(triplets2))
+
+    def robinson_foulds_distance(self, other: "AbstractGraph") -> float:
+        """
+        Calculate the normalized Robinson-Foulds distance between two trees.
+        :param other: The other tree to compare with.
+        :return: The Robinson-Foulds distance.
+        """
+        if not isinstance(other, AbstractGraph):
+            raise TypeError(f"Cannot calculate Robinson-Foulds distance with {type(other)}")
+        cluster_set = {
+            frozenset(descendants(self._tree, node).union({node}).intersection(self.labels))
+            for node in self._tree.nodes
+        }
+        other_cluster_set = {
+            frozenset(descendants(other._tree, node).union({node}).intersection(other.labels))
+            for node in other._tree.nodes
+        }
+        sym_diff = cluster_set.symmetric_difference(other_cluster_set)
+        return len(sym_diff) / len(cluster_set.union(other_cluster_set))
+
+    def tripartition_distance(self, other: "AbstractGraph") -> float:
+        """
+        Calculate the tripartition distance between two trees.
+        :param other: The other tree to compare with.
+        :return: The tripartition distance.
+        """
+        if not isinstance(other, AbstractGraph):
+            raise TypeError(f"Cannot calculate tripartition distance with {type(other)}")
+
+        def _get_tripartition_for_node(graph: "AbstractGraph", node, root_node) -> tuple[frozenset, frozenset]:
+            strict_descendants = set()
+            node_descendants = descendants(graph._tree, node).intersection(graph.labels)
+            for descendant in node_descendants:
+                if all(node in path for path in nx.all_simple_paths(graph._tree, root_node, descendant)):
+                    strict_descendants.add(descendant)
+            return (frozenset(strict_descendants), frozenset(node_descendants - strict_descendants))
+
+        root = [n for n in self._tree.nodes if self._tree.in_degree(n) == 0][0]
+        other_root = [n for n in other._tree.nodes if other._tree.in_degree(n) == 0][0]
+        tripartitions = {_get_tripartition_for_node(self, node, root) for node in self._tree.nodes}
+        other_tripartitions = {_get_tripartition_for_node(other, node, other_root) for node in other._tree.nodes}
+        sym_diff = tripartitions.symmetric_difference(other_tripartitions)
+        return len(sym_diff) / len(tripartitions.union(other_tripartitions))
+
+    def mu_distance(self, other: "AbstractGraph") -> float:
+        """
+        Calculate the Mu distance between two trees.
+        :param other: The other tree to compare with.
+        :return: The Mu distance.
+        """
+        if not isinstance(other, AbstractGraph):
+            raise TypeError(f"Cannot calculate Mu distance with {type(other)}")
+        mu_set = {
+            tuple(len(list(nx.all_simple_paths(self._tree, node, label))) for label in sorted(self.labels))
+            for node in self._tree.nodes
+        }
+        other_mu_set = {
+            tuple(len(list(nx.all_simple_paths(other._tree, node, label))) for label in sorted(other.labels))
+            for node in other._tree.nodes
+        }
+        sym_diff = mu_set.symmetric_difference(other_mu_set)
+        return len(sym_diff) / len(mu_set.union(other_mu_set))
 
 
 class AbstractGraphReconstruction(ABC):

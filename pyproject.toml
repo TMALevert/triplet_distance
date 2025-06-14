@@ -15,6 +15,7 @@ snakeviz = "^2.2.2"
 methodtools = "^0.4.7"
 phylox = "^1.1.0"
 pandas = "^2.2.3"
+multiset = "^3.2.0"
 
 
 [tool.poetry.group.test.dependencies]

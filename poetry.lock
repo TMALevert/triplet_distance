@@ -491,6 +491,17 @@ doc = ["sphinx"]
 test = ["functools32 (>=3.2.3-2)", "pytest (>=4.6.7)", "pytest-cov (>=2.6.1)"]
 
 [[package]]
+name = "multiset"
+version = "3.2.0"
+description = "An implementation of a multiset."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "multiset-3.2.0-py2.py3-none-any.whl", hash = "sha256:d31c6737f537d326835b55be72d0b2e2cf368c874a58cc87879f349273841a1a"},
+    {file = "multiset-3.2.0.tar.gz", hash = "sha256:7c59a786284b9c339df4f219dcbb4ce5f44d3ac1b20f922636c4d789e89cf7b5"},
+]
+
+[[package]]
 name = "networkx"
 version = "3.4.2"
 description = "Python package for creating and manipulating graphs and networks"
@@ -1054,4 +1065,4 @@ test = ["pytest (>=4.6.7)", "pytest-checkdocs (>=1.2.5)", "pytest-checkdocs (>=2
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "bc1e93264837c34a61bc756acb39d3bf8ef86ee9eea29f7c3c98847bc927670d"
+content-hash = "6d75301f1bcfcbd4fd76a22881b3a1b8509698f3445296a2efee3a5a6bb782da"

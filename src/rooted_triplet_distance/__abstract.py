@@ -10,6 +10,7 @@ from networkx.algorithms.dag import descendants
 from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.drawing import bfs_layout
 from networkx.relabel import convert_node_labels_to_integers
+from multiset import Multiset
 
 
 _re_patern_to_triplet_types = {
@@ -266,7 +267,7 @@ class AbstractGraph(ABC):
 
         def _get_tripartition_for_node(graph: "AbstractGraph", node, root_node) -> tuple[frozenset, frozenset]:
             strict_descendants = set()
-            node_descendants = descendants(graph._tree, node).intersection(graph.labels)
+            node_descendants = descendants(graph._tree, node).union({node}).intersection(graph.labels)
             for descendant in node_descendants:
                 if all(node in path for path in nx.all_simple_paths(graph._tree, root_node, descendant)):
                     strict_descendants.add(descendant)
@@ -287,16 +288,20 @@ class AbstractGraph(ABC):
         """
         if not isinstance(other, AbstractGraph):
             raise TypeError(f"Cannot calculate Mu distance with {type(other)}")
-        mu_set = {
-            tuple(len(list(nx.all_simple_paths(self._tree, node, label))) for label in sorted(self.labels))
-            for node in self._tree.nodes
-        }
-        other_mu_set = {
-            tuple(len(list(nx.all_simple_paths(other._tree, node, label))) for label in sorted(other.labels))
-            for node in other._tree.nodes
-        }
+        mu_set = Multiset(
+            [
+                tuple(len(list(nx.all_simple_paths(self._tree, node, label))) for label in sorted(self.labels))
+                for node in self._tree.nodes
+            ]
+        )
+        other_mu_set = Multiset(
+            [
+                tuple(len(list(nx.all_simple_paths(other._tree, node, label))) for label in sorted(other.labels))
+                for node in other._tree.nodes
+            ]
+        )
         sym_diff = mu_set.symmetric_difference(other_mu_set)
-        return len(sym_diff) / len(mu_set.union(other_mu_set))
+        return len(sym_diff) / (len(mu_set) + len(other_mu_set))
 
 
 class AbstractGraphReconstruction(ABC):

@@ -301,7 +301,7 @@ class AbstractGraph(ABC):
             ]
         )
         sym_diff = mu_set.symmetric_difference(other_mu_set)
-        return len(sym_diff) / (len(mu_set) + len(other_mu_set))
+        return len(sym_diff) / len(mu_set.union(other_mu_set))
 
 
 class AbstractGraphReconstruction(ABC):

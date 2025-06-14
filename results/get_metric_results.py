@@ -2,7 +2,7 @@ from rooted_triplet_distance import LevelOneNetwork
 
 
 """
-The networks used here are taken from the paper
+The networks used here (except manual_improved) are taken from the paper
 "Evaluating methods for computer-assisted stemmatology using artificial benchmark data sets" (2009) by Roos and Heikkila.
 The networks are reconstructions of the "Notre Besoin" tradition.
 """
@@ -98,7 +98,8 @@ if __name__ == "__main__":
     print(f"Classical Method B vs RHM               : {class_meth_b - rhm}")
     print(f"Neighbour Joining vs RHM                : {neighbour_joining - rhm}\n")
 
-    print(f"True stemma vs Manual Improved   : {true_stemma - manual_improved}\n")
+    print(f"True stemma vs Manual Improved        : {true_stemma - manual_improved}")
+    print(f"Classical Method B vs Manual Improved : {manual_improved - class_meth_b}\n")
 
     print("Robinson-Foulds distances:")
     print(f"True stemma vs Classical Method B: {true_stemma.robinson_foulds_distance(class_meth_b)}")
@@ -109,7 +110,8 @@ if __name__ == "__main__":
     print(f"Classical Method B vs RHM               : {class_meth_b.robinson_foulds_distance(rhm)}")
     print(f"Neighbour Joining vs RHM                : {neighbour_joining.robinson_foulds_distance(rhm)}\n")
 
-    print(f"True stemma vs Manual Improved   : {true_stemma.robinson_foulds_distance(manual_improved)}\n")
+    print(f"True stemma vs Manual Improved        : {true_stemma.robinson_foulds_distance(manual_improved)}")
+    print(f"Classical Method B vs Manual Improved : {manual_improved.robinson_foulds_distance(class_meth_b)}\n")
 
     print("Tripartition distances:")
     print(f"True stemma vs Classical Method B: {true_stemma.tripartition_distance(class_meth_b)}")
@@ -120,7 +122,8 @@ if __name__ == "__main__":
     print(f"Classical Method B vs RHM               : {class_meth_b.tripartition_distance(rhm)}")
     print(f"Neighbour Joining vs RHM                : {neighbour_joining.tripartition_distance(rhm)}\n")
 
-    print(f"True stemma vs Manual Improved   : {true_stemma.tripartition_distance(manual_improved)}\n")
+    print(f"True stemma vs Manual Improved        : {true_stemma.tripartition_distance(manual_improved)}")
+    print(f"Classical Method B vs Manual Improved : {manual_improved.tripartition_distance(class_meth_b)}\n")
 
     print("Mu distances:")
     print(f"True stemma vs Classical Method B: {true_stemma.mu_distance(class_meth_b)}")
@@ -131,4 +134,5 @@ if __name__ == "__main__":
     print(f"Classical Method B vs RHM               : {class_meth_b.mu_distance(rhm)}")
     print(f"Neighbour Joining vs RHM                : {neighbour_joining.mu_distance(rhm)}\n")
 
-    print(f"True stemma vs Manual Improved   : {true_stemma.mu_distance(manual_improved)}")
+    print(f"True stemma vs Manual Improved        : {true_stemma.mu_distance(manual_improved)}")
+    print(f"Classical Method B vs Manual Improved : {manual_improved.mu_distance(class_meth_b)}")

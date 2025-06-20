@@ -101,6 +101,18 @@ if __name__ == "__main__":
     print(f"True stemma vs Manual Improved        : {true_stemma - manual_improved}")
     print(f"Classical Method B vs Manual Improved : {manual_improved - class_meth_b}\n")
 
+    print("Average sign distances:")
+    print(f"True stemma vs Classical Method B: {true_stemma.average_sign_distance(class_meth_b)}")
+    print(f"True stemma vs Neighbour Joining : {true_stemma.average_sign_distance(neighbour_joining)}")
+    print(f"True stemma vs RHM               : {true_stemma.average_sign_distance(rhm)}\n")
+
+    print(f"Classical Method B vs Neighbour Joining : {class_meth_b.average_sign_distance(neighbour_joining)}")
+    print(f"Classical Method B vs RHM               : {class_meth_b.average_sign_distance(rhm)}")
+    print(f"Neighbour Joining vs RHM                : {neighbour_joining.average_sign_distance(rhm)}\n")
+
+    print(f"True stemma vs Manual Improved        : {true_stemma.average_sign_distance(manual_improved)}")
+    print(f"Classical Method B vs Manual Improved : {manual_improved.average_sign_distance(class_meth_b)}\n")
+
     print("Robinson-Foulds distances:")
     print(f"True stemma vs Classical Method B: {true_stemma.robinson_foulds_distance(class_meth_b)}")
     print(f"True stemma vs Neighbour Joining : {true_stemma.robinson_foulds_distance(neighbour_joining)}")

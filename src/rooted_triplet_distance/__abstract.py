@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import re
+from itertools import combinations, permutations
 
 import networkx as nx
 from matplotlib import pyplot as plt
@@ -11,7 +12,7 @@ from networkx.algorithms.shortest_paths.generic import shortest_path
 from networkx.drawing import bfs_layout
 from networkx.relabel import convert_node_labels_to_integers
 from multiset import Multiset
-
+from numpy import sign
 
 _re_patern_to_triplet_types = {
     re.compile(r"(.*)\|(.*),(.*)"): r"1|2,3",
@@ -288,6 +289,8 @@ class AbstractGraph(ABC):
         """
         if not isinstance(other, AbstractGraph):
             raise TypeError(f"Cannot calculate Mu distance with {type(other)}")
+        if self.labels != other.labels:
+            raise ValueError("Labels of the trees must be the same for Mu distance calculation.")
         mu_set = Multiset(
             [
                 tuple(len(list(nx.all_simple_paths(self._tree, node, label))) for label in sorted(self.labels))
@@ -302,6 +305,29 @@ class AbstractGraph(ABC):
         )
         sym_diff = mu_set.symmetric_difference(other_mu_set)
         return len(sym_diff) / len(mu_set.union(other_mu_set))
+
+    def average_sign_distance(self, other: "AbstractGraph") -> float:
+        """
+        Calculate the average signed distance between two trees.
+        :param other: The other tree to compare with.
+        :return: The average signed distance.
+        """
+        if not isinstance(other, AbstractGraph):
+            raise TypeError(f"Cannot calculate average signed distance with {type(other)}")
+        if self.labels != other.labels:
+            raise ValueError("Labels of the trees must be the same for average signed distance calculation.")
+        undirected_self = self._tree.to_undirected()
+        undirected_other = other._tree.to_undirected()
+        total_distance = 0
+        count = 0
+        for l1, l2, l3 in permutations(self.labels, 3):
+            d_l1_l2 = len(shortest_path(undirected_self, l1, l2)) - 1
+            d_l1_l3 = len(shortest_path(undirected_self, l1, l3)) - 1
+            d_l1_l2_other = len(shortest_path(undirected_other, l1, l2)) - 1
+            d_l1_l3_other = len(shortest_path(undirected_other, l1, l3)) - 1
+            total_distance += 0.5 * abs(sign(d_l1_l2 - d_l1_l3) - sign(d_l1_l2_other - d_l1_l3_other))
+            count += 1
+        return total_distance / count if count > 0 else 0.0
 
 
 class AbstractGraphReconstruction(ABC):

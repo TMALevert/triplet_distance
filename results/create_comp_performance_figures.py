@@ -313,7 +313,7 @@ def plot_time_vs_numb_labels_per_algorithm(datas: dict):
                 plt.scatter(
                     data["numb_labels"],
                     data[time_type],
-                    label=f"{(' '.join(network_type.split('_')) + 's').title()}",
+                    label=f"{(' '.join(network_type.split('_')) + ' instances').title()}",
                 )
         plt.yscale("log")
         plt.xlabel("Number of labels")
@@ -326,14 +326,14 @@ def plot_time_vs_numb_labels_per_algorithm(datas: dict):
 
 
 def plot_time_vs_numb_triplets_per_algorithm(datas: dict):
-    plt.figure()
     for time_type in __time_types:
+        plt.figure()
         for network_type, data in datas.items():
             if not all(np.isnan(data[time_type])):
                 plt.scatter(
-                    data["numb_gen_triplets" if "time_type" != "time_multi_alg" else "numb_multi_triplets"],
+                    data["numb_gen_triplets" if time_type != "time_multi_alg" else "numb_multi_triplets"],
                     data[time_type],
-                    label=f"{(' '.join(network_type.split('_')) + 's').title()}",
+                    label=f"{(' '.join(network_type.split('_')) + ' instances').title()}",
                 )
         plt.yscale("log")
         plt.xlabel(f"Number of {'general' if time_type != 'time_multi_alg' else 'multifurcating'} triplets")
@@ -356,7 +356,7 @@ def plot_time_vs_max_depth_per_algorithm(datas: dict):
                 plt.scatter(
                     data["max_depth"],
                     data[time_type],
-                    label=f"{(' '.join(network_type.split('_')) + 's').title()}",
+                    label=f"{(' '.join(network_type.split('_')) + ' instances').title()}",
                     alpha=0.8,
                     marker=markers[ind],
                     c=data["numb_labels"],

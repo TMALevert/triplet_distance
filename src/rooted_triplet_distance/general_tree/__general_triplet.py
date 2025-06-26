@@ -109,14 +109,3 @@ class GeneralTriplet(AbstractTriplet):
             return [set(self._tree_relation[1][1][1]), {self._tree_relation[1][0]}]
         elif self.type == r"1\2\3":
             return [self.labels]
-
-    def __eq__(self, other):
-        if not isinstance(other, (AbstractTriplet, str)):
-            raise TypeError(
-                f"unsupported operand type(s) for ==: '{self.__class__.__name__}' and '{other.__class__.__name__}'"
-            )
-        other = GeneralTriplet(other)
-        return self._tree_relation == other._tree_relation
-
-    def __hash__(self):
-        return super().__hash__()

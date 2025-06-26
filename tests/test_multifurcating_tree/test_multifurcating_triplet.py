@@ -91,3 +91,15 @@ def test_iter(triplet):
     t = MultifurcatingTriplet(triplet)
     for element in t:
         assert element in t
+
+
+def test_hash():
+    triplet = MultifurcatingTriplet("A|B|C")
+    triplet2 = MultifurcatingTriplet("A,B|C")
+    triplet3 = MultifurcatingTriplet("A|B,C")
+    assert triplet.__hash__() == triplet.__hash__()
+    assert triplet2.__hash__() == triplet2.__hash__()
+    assert triplet3.__hash__() == triplet3.__hash__()
+    assert triplet.__hash__() != triplet2.__hash__()
+    assert triplet.__hash__() != triplet3.__hash__()
+    assert triplet2.__hash__() != triplet3.__hash__()

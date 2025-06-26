@@ -1,3 +1,5 @@
+from itertools import combinations
+
 import pytest
 
 from rooted_triplet_distance import GeneralTriplet
@@ -155,3 +157,19 @@ def test_iter(triplet):
     t = GeneralTriplet(triplet)
     for element in t:
         assert element in t
+
+
+def test_hash():
+    triplet1 = GeneralTriplet("A|B|C")
+    triplet2 = GeneralTriplet("A,B|C")
+    triplet3 = GeneralTriplet("A|B,C")
+    triplet4 = GeneralTriplet("A/B|C")
+    triplet5 = GeneralTriplet("A/B/C")
+    triplet6 = GeneralTriplet(r"A/B\C")
+    triplet7 = GeneralTriplet(r"A|B\C")
+    triplet8 = GeneralTriplet(r"A\B\C")
+    triplets = [triplet1, triplet2, triplet3, triplet4, triplet5, triplet6, triplet7, triplet8]
+    for triplet in triplets:
+        assert triplet.__hash__() == triplet.__hash__()
+    for triplet_i, triplet_j in combinations(triplets, 2):
+        assert triplet_i.__hash__() != triplet_j.__hash__()

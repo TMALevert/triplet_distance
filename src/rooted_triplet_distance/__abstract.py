@@ -1,7 +1,9 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import re
-from itertools import combinations, permutations
+from itertools import permutations
+
 
 import networkx as nx
 from matplotlib import pyplot as plt
@@ -61,9 +63,10 @@ def _get_tree_dict(tree: DiGraph) -> dict:
     return tree_dict
 
 
-@dataclass(slots=True)
+@dataclass
 class AbstractTriplet(ABC):
     def __init__(self, triplet: str):
+        self.__slots__ = ("_string", "_tree_relation", "type", "labels", "parts")
         self.labels = None
         self.parts = None
         self._string = str(triplet)
@@ -96,9 +99,18 @@ class AbstractTriplet(ABC):
     def __hash__(self):
         return hash(self._tree_relation)
 
-    @abstractmethod
-    def __eq__(self, other: str):
-        ...
+    def __eq__(self, other: str | "AbstractTriplet") -> bool:
+        """
+        Checks if two AbstractTriplet instances are equal.
+        :param other: An instance of AbstractTriplet or a string representation of a triplet.
+        :return: True if the triplets are equal, False otherwise.
+        """
+        if not isinstance(other, (AbstractTriplet, str)):
+            raise TypeError(
+                f"unsupported operand type(s) for ==: '{self.__class__.__name__}' and '{other.__class__.__name__}'"
+            )
+        other = AbstractTriplet(other)
+        return self._tree_relation == other._tree_relation
 
 
 class AbstractGraph(ABC):

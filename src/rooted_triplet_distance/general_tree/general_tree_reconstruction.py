@@ -5,6 +5,10 @@ from .__general_triplet import GeneralTriplet
 
 
 class GeneralTreeReconstruction(AbstractGraphReconstruction):
+    """
+    A class for reconstructing a general tree from a set of triplets.
+    """
+
     def __init__(
         self,
         labels: list[str],
@@ -13,6 +17,14 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         descendants: dict[str, set] = None,
         separations: dict[str, set] = None,
     ):
+        """
+        Initializes a GeneralTreeReconstruction instance.
+        :param labels: A list of labels for the nodes in the tree.
+        :param triplets: A list of triplets, either as strings or as instances of GeneralTriplet.
+        :param numb_unlabelled_nodes: [Optional] An integer representing the number of unlabelled nodes in the reconstructed tree so far. This variable is only used in the recursion.
+        :param descendants: [Optional] A dictionary where keys are labels and values are sets of their descendants in the triplets. This variable is only used in the recursion.
+        :param separations: [Optional] A dictionary where keys are labels and values are sets of labels that are separated from the given label by some other node. This variable is only used in the recursion.
+        """
         super().__init__(labels)
         self.__triplets = [GeneralTriplet(triplet) for triplet in triplets]
         self.__numb_unlabelled_nodes = numb_unlabelled_nodes
@@ -23,6 +35,11 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
             self.__descendants, self.__separation = self.__get_descendants_and_separations()
 
     def __compute_transitive_descendants(self, descendants: dict[str, set]) -> dict[str, set]:
+        """
+        Computes the transitive closure of the descendants for each label in the given dictionary.
+        :param descendants: A dictionary where keys are labels and values are sets of their direct descendants.
+        :return: A dictionary where keys are labels and values are sets of all their descendants, including transitive ones.
+        """
         # Create a dictionary to store the transitive closure
         transitive_descendants = {key: set() for key in descendants}
 
@@ -41,6 +58,10 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         return transitive_descendants
 
     def __get_descendants_and_separations(self) -> tuple[dict[str, set], dict[str, set]]:
+        """
+        Computes the descendants and separations for each label based on the triplets.
+        :return: A tuple containing two dictionaries: the first maps labels to their descendants, and the second maps labels to sets of labels that are separated from them.
+        """
         descendants = {label: set() for label in self._labels}
         separations = {label: set() for label in self._labels}
         for triplet in self.__triplets:
@@ -51,6 +72,10 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         return descendants, separations
 
     def __find_possible_roots(self) -> list[str]:
+        """
+        Finds possible roots for the tree based on the triplets and their relationships.
+        :return: A list of labels that can serve as roots for the tree.
+        """
         possible_roots: set = {
             label
             for label in self._labels
@@ -85,6 +110,11 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         return list(possible_roots)
 
     def __divide_in_branches(self, root: str) -> list[set[str]]:
+        """
+        Divides the triplets into branches based on the specified root node.
+        :param root: The label of the root node to start the division from.
+        :return: A list of sets, where each set contains labels of nodes that form a branch in the tree.
+        """
         branches: list[set[str]] = []
         fanned_triplets = []
         placed_nodes = set()
@@ -152,6 +182,10 @@ class GeneralTreeReconstruction(AbstractGraphReconstruction):
         return branches
 
     def reconstruct(self) -> dict[str, dict]:
+        """
+        Reconstructs the general tree from the triplets.
+        :return: A nested dictionary representing the reconstructed tree, where keys are node labels and values are dictionaries representing their children.
+        """
         tree = {}
         roots = self.__find_possible_roots()
         while len(roots) >= 1:

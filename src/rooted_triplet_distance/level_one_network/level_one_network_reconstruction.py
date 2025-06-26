@@ -7,6 +7,10 @@ from .level_one_network import NetworkTriplet
 
 
 class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
+    """
+    A class for reconstructing a level one network from triplets, which are used to find relationships among nodes in the network.
+    """
+
     def __init__(
         self,
         labels: list[str],
@@ -16,6 +20,15 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         separations: dict[str, set] = None,
         sn_sets: set[frozenset[str]] = None,
     ):
+        """
+        Initializes a LevelOneNetworkReconstruction instance.
+        :param labels: A list of labels for the nodes in the network.
+        :param triplets: A list of triplets, either as strings or as instances of NetworkTriplet.
+        :param numb_unlabelled_nodes: [Optional] The number of unlabelled nodes in the network. This is used to generate unique names for unlabelled nodes during reconstruction. This value is only used in the recursion.
+        :param descendants: [Optional] A dictionary where keys are labels and values are sets of labels that are descendants of the key label. This value is only used in the recursion.
+        :param separations: [Optional] A dictionary where keys are labels and values are sets of labels that are separated from the key label. This value is only used in the recursion.
+        :param sn_sets: [Optional] A set of frozensets, where each frozenset contains labels that are part of a non-trivial SN set. This value is only used in the recursion.
+        """
         super().__init__(labels)
         self.__is_cycle: bool = None
         self.__triplets = [NetworkTriplet(triplet) for triplet in triplets]
@@ -37,7 +50,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
             self.__sn_sets = self.__get_non_trivial_sn_sets()
         self.__maximal_sn_sets = self.__get_maximal_sn_sets()
 
-    def __get_non_trivial_sn_sets(self):
+    def __get_non_trivial_sn_sets(self) -> set[frozenset[str]]:
+        """
+        Finds all non-trivial SN sets based on the triplet set.
+        :return: A set of frozensets, where each frozenset contains labels that are part of a non-trivial SN set.
+        """
         sn_sets = {frozenset({label}) for label in self._labels}
         for i, j in combinations(self._labels, 2):
             sn_set = {i}
@@ -60,7 +77,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                 sn_sets.add(frozenset(sn_set))
         return sn_sets
 
-    def __get_maximal_sn_sets(self):
+    def __get_maximal_sn_sets(self) -> list[frozenset[str]]:
+        """
+        Finds all maximal SN sets from the non-trivial SN sets.
+        :return: A list of frozensets, where each frozenset contains labels that are part of a maximal SN set.
+        """
         maximal_sn_sets = []
         for sn_set in self.__sn_sets:
             if not any(sn_set.issubset(other_sn_set) for other_sn_set in self.__sn_sets if sn_set != other_sn_set):
@@ -68,6 +89,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         return maximal_sn_sets
 
     def __compute_transitive_descendants(self, descendants: dict[str, set]) -> dict[str, set]:
+        """
+        Computes the transitive closure of descendants for each label in the given dictionary.
+        :param descendants: A dictionary where keys are labels and values are sets of labels that are direct descendants of the key label.
+        :return: A dictionary where keys are labels and values are sets of labels that are transitive descendants of the key label.
+        """
         # Create a dictionary to store the transitive closure
         transitive_descendants = {key: set() for key in descendants}
 
@@ -86,6 +112,10 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         return transitive_descendants
 
     def __get_descendants_and_separations(self) -> tuple[dict[str, set], dict[str, set]]:
+        """
+        Computes the descendants and separations for each label based on the triplet set.
+        :return: A tuple containing two dictionaries: a dictionary of descendants and a dictionary of separations.
+        """
         descendants = {label: set() for label in self._labels}
         separations = {label: set() for label in self._labels}
         for triplet in self.__triplets:
@@ -96,6 +126,10 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         return descendants, separations
 
     def __find_possible_roots(self) -> list[str]:
+        """
+        Finds all possible roots of the network based on the triplet set.
+        :return: A list of labels that can be considered as roots of the network.
+        """
         possible_roots: set = {
             label
             for label in self._labels
@@ -129,6 +163,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         return list(possible_roots)
 
     def __divide_in_branches(self, root: str) -> list[set[str]]:
+        """
+        Divides the labels into branches based on the relationships defined in the triplets, starting from a given root.
+        :param root: The label that serves as the root of the network from which to start dividing into branches.
+        :return: A list of sets, where each set represents a branch of the network.
+        """
         branches: list[set[str]] = []
         fanned_triplets = []
         placed_nodes = set()
@@ -201,6 +240,11 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         return branches
 
     def __find_sink_of_cycle(self, source: str) -> list[set | frozenset]:
+        """
+        Finds the sinks and their descendants for a cycle in the network, starting from a given source label.
+        :param source: The label from which to start searching for sinks and their descendants.
+        :return: A list of sets or frozensets, where each set corresponds to highest sinks and their descendants with no cut-arcs above it.
+        """
         sinks_and_descendants = set()
         if source in self._labels:
             for triplet in self.__triplets:
@@ -299,6 +343,12 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         return sinks_and_descendants
 
     def __find_singular_cycle_sink(self, sinks_and_descendants: list[set[str]], source: str) -> set[str]:
+        """
+        Removes any sink and its descendants that are not the sink of the cycle corresponding to the source.
+        :param sinks_and_descendants: A list of sets, where each set contains labels that are sinks and their descendants.
+        :param source: The node that corresponds to the source of the cycle.
+        :return: A set containing the labels that are part of the cycle's sink and its descendants.
+        """
         sinks_and_descendants = set(sinks_and_descendants)
         for sink_1, sink_2 in combinations(sinks_and_descendants, 2):
             s_1 = choice(list(sink_1))
@@ -329,6 +379,12 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
     def __resolve_cycle(
         self, sink_and_descendants: set[str], source: str = None
     ) -> tuple[list[set[str]], set[str], set[str]]:
+        """
+        Resolves the cycle in the network by finding cycle branches and internal cycle vertices.
+        :param sink_and_descendants: A set of labels that are part of the cycle's sink and its descendants.
+        :param source: The label that corresponds to the source of the cycle. If None, a random label from the cycle will be used.
+        :return: A tuple containing: a list of sets representing cycle branches, a set of labels that are part of the cycle's sink and its descendants, and a set of internal cycle vertices.
+        """
         cycle_labels = set(self._labels) - {source}
         internal_cycle_vertices = {
             label
@@ -389,6 +445,14 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
     def __find_cycle_order(
         self, branches: list[set[str]], sink_branch: set[str], cycle_vertices: set[str], source: str
     ) -> tuple[list[set[str]], list[set[str]]]:
+        """
+        Finds which branches are on the same path from the source to the sink in a cycle based on the relationships defined in the triplets.
+        :param branches: A list of sets, where each set represents a cycle branch.
+        :param sink_branch: A set of labels that represent the sink branch in the cycle.
+        :param cycle_vertices: A set of labels that are part of the cycle vertices.
+        :param source: The label that corresponds to the source of the cycle.
+        :return: A tuple containing two lists of sets: the first list contains branches that are on the left side of the cycle, and the second list contains branches that are on the right side of the cycle.
+        """
         left, right = [], []
 
         def place_together(branch1, branch2):
@@ -504,6 +568,14 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
         sink_and_descendants: set[str],
         cycle_labels: set[str],
     ) -> bool:
+        """
+        Filters triplets based on their relationship to cycle branches and the sink and its descendants.
+        :param triplet: An instance of NetworkTriplet that needs to be filtered.
+        :param cycle_branches: A list of sets, where each set represents a cycle branch on one side of the cycle.
+        :param sink_and_descendants: A set of labels that are part of the cycle's sink and its descendants.
+        :param cycle_labels: A set of labels that are part of the cycle.
+        :return: True if the triplet should be included in the cycle reconstruction, False otherwise.
+        """
         if len([b for b in cycle_branches + [sink_and_descendants] if b.intersection(triplet.labels) != set()]) == 1:
             return True
         if triplet.type == r"1/2\3" or triplet.type in {r"1\2\3", r"1/2/3"}:
@@ -539,6 +611,10 @@ class LevelOneNetworkReconstruction(AbstractGraphReconstruction):
                 return False
 
     def reconstruct(self) -> dict:
+        """
+        Reconstructs the network based on the triplet set and the labels.
+        :return: A nested dictionary representing the reconstructed network, where keys are nodes and values are dictionaries containing the direct children of the key node.
+        """
         self.__is_cycle = False
         tree = {}
         if len(self._labels) == 1:

@@ -6,10 +6,24 @@ from ..__abstract import AbstractGraph
 
 
 class MultifurcatingTree(AbstractGraph):
+    """
+    A class representing a multifurcating tree structure, which can be used to find triplets among nodes in the tree and
+    compare with other trees .
+    """
+
     def __init__(self, tree: dict, labels: list[str] = None):
+        """
+        Initializes a MultifurcatingTree instance.
+        :param tree: A nested dictionary representing the tree structure, where keys are node identifiers and values are lists of child nodes.
+        :param labels: A list of labels for the nodes in the tree. If None, all nodes are considered labeled.
+        """
         super().__init__(tree, labels)
 
     def _find_triplets(self) -> list[MultifurcatingTriplet]:
+        """
+        Finds all multifurcating triplets in the tree by examining combinations of three nodes and their relationships.
+        :return: A list of MultifurcatingTriplet instances representing the triplets found in the tree.
+        """
         triplets = []
         for node1, node2, node3 in combinations(self._tree.nodes, 3):
             if node1 not in self.labels or node2 not in self.labels or node3 not in self.labels:

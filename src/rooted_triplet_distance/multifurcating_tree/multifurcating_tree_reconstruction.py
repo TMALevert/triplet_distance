@@ -3,6 +3,10 @@ from ..__abstract import AbstractGraphReconstruction
 
 
 class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
+    """
+    A class for reconstructing a multifurcating tree from a set of triplets.
+    """
+
     def __init__(
         self,
         labels: list[str],
@@ -11,6 +15,14 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
         numb_unlabelled_nodes: int = 0,
         root_name="root",
     ):
+        """
+        Initializes a MultifurcatingTreeReconstruction instance.
+        :param labels: A list of labels for the nodes in the tree.
+        :param triplets: A list of triplets, either as strings or as instances of MultifurcatingTriplet.
+        :param D_set: [Optional] A dictionary where keys are labels and values are sets of labels that are not in the triplet with the key label. This value is only used in the recursion.
+        :param numb_unlabelled_nodes: [Optional] The number of unlabelled nodes in the tree. This is used to generate unique names for unlabelled nodes during reconstruction. This value is only used in the recursion.
+        :param root_name: [Optional] The name of the root node in the reconstructed tree. Default is "root".
+        """
         super().__init__(labels)
         self.__triplets = [MultifurcatingTriplet(triplet) for triplet in triplets]
         if D_set is None:
@@ -21,6 +33,11 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
         self.__root_name = root_name
 
     def __create_D_set(self, label: str) -> set[str]:
+        """
+        Creates a D-set for a given label, which is the set of labels that are not in a triplet with the given label.
+        :param label: The label for which to create the D-set.
+        :return: A set of labels that are not in a triplet with the given label.
+        """
         D = set(self._labels)
         D.remove(label)
         for triplet in self.__triplets:
@@ -30,7 +47,11 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
                         D.remove(l)
         return D
 
-    def __children_of_root(self):
+    def __children_of_root(self) -> set[str]:
+        """
+        Finds the children of the root node in the triplet set.
+        :return: A set of labels that are children of the root node.
+        """
         children = set(self._labels)
         for triplet in self.__triplets:
             if triplet._type == r"1|2,3":
@@ -39,7 +60,12 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
                         children.difference_update(part)
         return children
 
-    def __divide_in_branches(self, children: set[str]):
+    def __divide_in_branches(self, children: set[str]) -> list[set[str]]:
+        """
+        Divides the labels into branches based on the relationships defined in the triplets.
+        :param children: A set of labels that are children of the root node.
+        :return: A list of sets, where each set represents a branch of the tree.
+        """
         branches = []
         placed_nodes = set()
         fanned_triplets = []
@@ -126,6 +152,10 @@ class MultifurcatingTreeReconstruction(AbstractGraphReconstruction):
         return branches
 
     def reconstruct(self):
+        """
+        Reconstructs the multifurcating tree from the triplets and labels.
+        :return: A nested dictionary representing the reconstructed tree, where keys are node names and values are dictionaries of child nodes.
+        """
         if len(self._labels) == 0:
             return {self.__root_name: {}}
         elif len(self._labels) == 2:

@@ -14,6 +14,9 @@
     <option name="namespacePackageFolders">
       <list>
         <option value="$MODULE_DIR$/results" />
+        <option value="$MODULE_DIR$/tests/test_general_tree" />
+        <option value="$MODULE_DIR$/tests/test_level_one_network" />
+        <option value="$MODULE_DIR$/tests/test_multifurcating_tree" />
       </list>
     </option>
   </component>

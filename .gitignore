@@ -7,3 +7,4 @@ build/
 /.venv
 .coverage
 *.csv
+!example_network.png

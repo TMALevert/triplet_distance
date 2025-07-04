@@ -7,6 +7,7 @@ from pandas import read_csv, DataFrame
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import curve_fit
 
 from rooted_triplet_distance import (
     MultifurcatingTree,
@@ -22,9 +23,19 @@ __time_to_reconstruction = {
     "time_network_alg": "Network Reconstruction",
 }
 __time_to_colour = {
-    "time_multi_alg": "tab:blue",
-    "time_gen_alg": "tab:orange",
-    "time_network_alg": "tab:green",
+    "time_multi_alg": "#1A659E",
+    "time_gen_alg": "#F58300",
+    "time_network_alg": "#058A22",
+}
+__time_to_fit_colour = {
+    "time_multi_alg": "#018ADF",
+    "time_gen_alg": "#F0C808",
+    "time_network_alg": "#82C62F",
+}
+__time_to_runtime = {
+    "time_multi_alg": {"X": 7, "triplets": 7 / 3},
+    "time_gen_alg": {"X": 8, "triplets": 8 / 3},
+    "time_network_alg": {"X": 8, "triplets": 8 / 3},
 }
 
 
@@ -88,6 +99,44 @@ def load_data(network_type: str):
     return data
 
 
+def plot_runtime_fit(x, y, power, colour, x_string: str):
+    """
+    Fit the theoretical runtime on the given x and y values and the power.
+    :param x: The x values of the data.
+    :param y: The y values of the data.
+    :param power: The power to which the x values are raised based on the theoretical running time.
+    :param colour: The colour of the line in the plot.
+    :param x_string: The string representation of the x values for the label.
+    """
+
+    def __theoretical_runtime(x, a, b, p):
+        return a * (x**p) + b
+
+    def latex_float(numb: float) -> str:
+        float_str = "{0:.2g}".format(numb)
+        if "e" in float_str:
+            base, exponent = float_str.split("e")
+            return rf"{base} \cdot 10^{{{int(exponent)}}}"
+        else:
+            return float_str
+
+    sorted_indices = np.argsort(x)
+    x = x[sorted_indices]
+    y = y[sorted_indices]
+    popt, _ = curve_fit(__theoretical_runtime, x, y, p0=[1, 1, power], bounds=(0, np.inf))
+    x_range = np.linspace(min(x), max(x), 100)
+    y_fit = __theoretical_runtime(x_range, *popt)
+    plt.plot(
+        x_range,
+        y_fit,
+        color=colour,
+        label=f"Best fit: ${latex_float(popt[0])}{x_string}^{'{'}{round(popt[2], 2)}{'}'}+{latex_float(popt[1])}$",
+        linestyle="dashdot",
+        zorder=3,
+    )
+    plt.legend(loc="lower right")
+
+
 def plot_time_vs_numb_labels(data: DataFrame, network_type: str):
     plt.figure()
     for time_type in __time_types:
@@ -96,7 +145,14 @@ def plot_time_vs_numb_labels(data: DataFrame, network_type: str):
                 data["numb_labels"],
                 data[time_type],
                 label=__time_to_reconstruction[time_type],
-                c=__time_to_colour[time_type],
+                color=__time_to_colour[time_type],
+            )
+            plot_runtime_fit(
+                data["numb_labels"],
+                data[time_type],
+                __time_to_runtime[time_type]["X"],
+                __time_to_fit_colour[time_type],
+                "$|X|$",
             )
     plt.yscale("log")
     plt.xlabel("Number of labels")
@@ -116,7 +172,14 @@ def plot_time_vs_numb_labels_only_multi_and_gen_alg(data: DataFrame, network_typ
                 data["numb_labels"],
                 data[time_type],
                 label=__time_to_reconstruction[time_type],
-                c=__time_to_colour[time_type],
+                color=__time_to_colour[time_type],
+            )
+            plot_runtime_fit(
+                data["numb_labels"],
+                data[time_type],
+                __time_to_runtime[time_type]["X"],
+                __time_to_fit_colour[time_type],
+                "$|X|$",
             )
     plt.yscale("log")
     plt.xlabel("Number of labels")
@@ -135,7 +198,14 @@ def plot_time_vs_numb_gen_triplets(data: DataFrame, network_type: str):
                 data["numb_gen_triplets"],
                 data[time_type],
                 label=__time_to_reconstruction[time_type],
-                c=__time_to_colour[time_type],
+                color=__time_to_colour[time_type],
+            )
+            plot_runtime_fit(
+                data["numb_gen_triplets"],
+                data[time_type],
+                __time_to_runtime[time_type]["triplets"],
+                __time_to_fit_colour[time_type],
+                f"$|t({'N' if 'network' in network_type else 'T'})|$",
             )
     plt.yscale("log")
     plt.xlabel("Number of general triplets")
@@ -155,7 +225,14 @@ def plot_time_vs_numb_multi_triplets(data: DataFrame, network_type: str):
                 data["numb_multi_triplets"],
                 data[time_type],
                 label=__time_to_reconstruction[time_type],
-                c=__time_to_colour[time_type],
+                color=__time_to_colour[time_type],
+            )
+            plot_runtime_fit(
+                data["numb_multi_triplets"],
+                data[time_type],
+                __time_to_runtime[time_type]["triplets"],
+                __time_to_fit_colour[time_type],
+                f"$|t({'N' if 'network' in network_type else 'T'})|$",
             )
     plt.yscale("log")
     plt.xlabel("Number of general triplets")
@@ -215,7 +292,7 @@ def plot_time_vs_numb_nodes(data: DataFrame, network_type: str):
                 data[time_type],
                 label=__time_to_reconstruction[time_type],
                 alpha=0.8,
-                c=__time_to_colour[time_type],
+                color=__time_to_colour[time_type],
             )
     plt.yscale("log")
     plt.xlabel("Number of nodes")
@@ -315,6 +392,13 @@ def plot_time_vs_numb_labels_per_algorithm(datas: dict):
                     data[time_type],
                     label=f"{(' '.join(network_type.split('_')) + ' instances').title()}",
                 )
+        plot_runtime_fit(
+            np.concatenate([data["numb_labels"] for data in datas.values() if not all(np.isnan(data[time_type]))]),
+            np.concatenate([data[time_type] for data in datas.values() if not all(np.isnan(data[time_type]))]),
+            __time_to_runtime[time_type]["X"],
+            "red",
+            "$|X|$",
+        )
         plt.yscale("log")
         plt.xlabel("Number of labels")
         plt.ylabel("Time [s]")
@@ -335,6 +419,19 @@ def plot_time_vs_numb_triplets_per_algorithm(datas: dict):
                     data[time_type],
                     label=f"{(' '.join(network_type.split('_')) + ' instances').title()}",
                 )
+        plot_runtime_fit(
+            np.concatenate(
+                [
+                    data["numb_gen_triplets" if time_type != "time_multi_alg" else "numb_multi_triplets"]
+                    for data in datas.values()
+                    if not all(np.isnan(data[time_type]))
+                ]
+            ),
+            np.concatenate([data[time_type] for data in datas.values() if not all(np.isnan(data[time_type]))]),
+            __time_to_runtime[time_type]["triplets"],
+            "red",
+            f"$|t({'N' if 'network' in time_type else 'T'})|$",
+        )
         plt.yscale("log")
         plt.xlabel(f"Number of {'general' if time_type != 'time_multi_alg' else 'multifurcating'} triplets")
         plt.ylabel("Time [s]")

@@ -2,7 +2,7 @@
 This package provides a Python interface to the Triplet Distance metric.
 It is part of the thesis of TMA Levert (5086191) at the Delft University of Technology.
 It implements the reconstruction algorithms as discussed in the thesis, as well as the code used to obtain the results in the thesis.
-The thesis can be found at https://repository.tudelft.nl/TBD.
+The thesis can be found at https://resolver.tudelft.nl/uuid:a590255b-06dd-4f56-a905-c2f41705f525.
 
 # Usage
 For each of the three network types discussed in the thesis, a reconstruction algorithm is provided.
